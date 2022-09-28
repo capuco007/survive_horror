@@ -2,6 +2,11 @@ import bge
 from bge.logic import globalDict as gd
 
 gd['game_status'] = {
+        'reloadTime':0,
+        'index':0,
+        'reload': False,
+        'clic':0,
+        'select_item': None,
         'openclosebau':False,
         'open_invent': False,
 
@@ -10,19 +15,21 @@ gd['game_status'] = {
         'pos_spw':[],
             
         'player':{
+            'pistola_capacity':10,
+            'shotgun_capacity':8,
+            'metralha_capacity':50,
             'scene':'',
             'life': 90,
             'gun': '',
-            'M_pistola': 10,
-            'M_shotgun': 0,
-            'M_bazuka': 0,
+            'bala_pistola': 0,
+            'bala_shotgun': 0,
+            'bala_metralha': 0,
             'Global_Municao': 0
-        },
-        'inventory':{
 
         },
-        'bau':{
-            
-        },
+        'inventory':[
 
+        ],
+        'bau':[],
+        'slot_conf':[]
     }

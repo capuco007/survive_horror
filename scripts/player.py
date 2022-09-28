@@ -1,20 +1,27 @@
 from builtins import print
+from xml.etree.ElementTree import TreeBuilder
 import bge
 from mathutils import Vector
-from.inventory  import *
+from .inventory  import *
 from bge.logic import globalDict as gd
+
 
 from scripts import inventory
 
 status: dict = gd['game_status']
 
+
+
+
 def start(cont):
     own = cont.owner
+    
     own['arm'] = [arm for arm in own.childrenRecursive if 'player_arm' in arm]
     own['isMove'] = 0
     own['time_scene_pass'] = 0
     own['dor_open'] = False
     own['bauOpen'] = False
+    own['invetOpen'] = False
     own['openBauTime'] = 0
     if status['pos_spw']:
         own.worldPosition = status['pos_spw']
@@ -24,11 +31,9 @@ def update(cont):
     own = cont.owner
     movement(cont)
     colision(cont)
-    setMunision(cont)
-    openCloseBau(cont)
-    
-        
-    
+    openInventory(cont)
+    bauOpen(cont)
+
     if own['time_scene_pass'] >1:
         own['time_scene_pass'] -= 1
 
@@ -41,7 +46,7 @@ def colision(cont):
     #print(own['time_scene_pass'])
     #Colidir com Portas 
     keys = status['inventory']
-    msg = status['exib_msg']
+    
     if coll_dor.positive:
 
         o = coll_dor.hitObject.groupObject
@@ -68,20 +73,25 @@ def colision(cont):
     else:
         own['time_scene_pass'] = 0 
         status['exib_msg'] = 'none'
-                
-
-
-        
+                  
     #Colidir com Itens pegaveis
     if coll_itens.positive:
         o = coll_itens.hitObject.groupObject
         if tc[bge.events.SPACEKEY].activated:
             inventory = status['inventory']
-            if len(list(inventory)) < 10:
+            if len(inventory)< 8:
+                item = {}
+                
+                # Pegar propriedades da instância de grupo do item
                 for prop in o.getPropertyNames():
-                    inventory[o.name] = o[prop]
-                    
-                # alterar game-status
+                    item[prop] = o[prop]
+                itemAdd(item, inventory)
+                o.endObject()
+                    # alterar game-status
+            else:
+                
+                status['exib_msg'] = 'nao ha mais espaço no inventario '# mostra que o inventario esta cheio
+      
 def movement(cont):
     own = cont.owner
     char = bge.constraints.getCharacter(own)
@@ -91,6 +101,7 @@ def movement(cont):
 
     if status['openclosebau'] == False and status['open_invent'] == False:
         char.walkDirection = Vector([x,y,0]).normalized()*0.08
+        
     else:
         char.walkDirection = Vector([0,0,0])
    
@@ -117,63 +128,51 @@ def setMunision(cont):
         if 'pistola' in invent:
             pass
 
-def openCloseBau(cont):
+def openInventory(cont):
     own = cont.owner
-    coll_bau = cont.sensors['coll_bau']
     tc = bge.logic.keyboard.inputs
-    Empty_bau = own.childrenRecursive.get('Empty_bau')
-    if coll_bau.positive:
-        if tc[bge.events.EKEY].activated and own['bauOpen'] == False and own['openBauTime'] == 0:
-            own['bauOpen'] = True
+    listScene = bge.logic.getSceneList()
+    if tc[bge.events.QKEY].activated and own['openBauTime'] == 0:
+        if status['open_invent'] == False:
+            status['open_invent'] = True
             own['openBauTime'] = 20
-            status['openclosebau'] = own['bauOpen']
-
-        if tc[bge.events.EKEY].activated and own['bauOpen'] == True and own['openBauTime'] == 0:
-            own['bauOpen'] = False
-            own['openBauTime'] = -20
-            status['openclosebau'] = own['bauOpen']
+            bge.logic.addScene('inventory',1)
     
-    if own['openBauTime']>0:
-        own['openBauTime']-=1
+    if tc[bge.events.QKEY].activated and own['openBauTime'] == 0:
+        if status['open_invent'] == True:   
+            status['open_invent'] = False
+            status['openclosebau'] = False
+            own['openBauTime'] = 20
+            bge.logic.sendMessage('endScene')
     
-    if own['openBauTime'] < 0:
-        own['openBauTime'] +=1
+    if own['openBauTime'] >0:
+        own['openBauTime'] -= 1
 
-    if own['openBauTime'] == 19:
-        
-        bge.logic.sendMessage('openBau')
-    
-    if own['openBauTime'] == -19:
-        bge.logic.sendMessage('closedBau')
-    
-
-   
-
-def save_config(cont):
+def bauOpen(cont):
     own = cont.owner
-    savegame = status
-    with open(bge.logic.expandPath('//save.txt'), 'w') as openedFile:
-            openedFile.write(str(savegame))
+    coll_bau  =cont.sensors['coll_bau']
+    tc = bge.logic.keyboard.inputs
 
-def load_config(cont):
+    if coll_bau.positive:
+        if tc[bge.events.SPACEKEY].activated:
+             status['open_invent'] = True
+             status['openclosebau'] = True
+             bge.logic.addScene('inventory',1)
+                    
+def msg(cont):
     own = cont.owner
-
+    msg = status['exib_msg']
     
 
-    from ast import literal_eval
+    
+    if msg != 'none' and own['exib'] == 0:
+        own.visible = True
+        own['MSG'] = msg
+        own['exib'] = 30
 
-    savegame = {}
-
-    try:
-        with open(bge.logic.expandPath('//save.txt'), 'r') as openedFile:
-            savegame = literal_eval(openedFile.read())
-            #print('> Savegame carregado de', openedFile.name)
-            status = savegame
-
-    except Exception as e:
-            print('X Savegame não existe', e)
-            
-    if status['pos_spw']:
-        own.worldPosition = status['pos_spw']
-        print(status['pos_spw'])
-    #status['pos_spw'] = []
+    if own['exib'] < 2:
+        status['exib_msg'] = 'none'
+        own.visible = False
+        own['MSG'] = msg
+    if own['exib'] >0:
+        own['exib']-=1

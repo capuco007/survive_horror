@@ -68,6 +68,7 @@ def itemRemove(idx, collection) -> dict:
 ### Pegar item no cenário ###
 #############################
 
+
 hitObject = None  # type: KX_GameObject
 item = {}
 
