@@ -87,7 +87,6 @@ def slots(cont):
 
 def recarregar(cont):
     own = cont.owner
-    print('Recarregando_Armas')
     arma = status['player']['arma_mao']
     list_Balas = []
     for item in status['inventory']:
@@ -167,7 +166,7 @@ def usar_item_mover_item(cont):
                     elif status['inventory'][own['obHit']['slot']]['tipo'] == 'cura':
                         if status['player']['saude'] < 100:
                             status['player']['saude'] = 100
-                            print('Curando')
+                            print('Curando',status['player']['saude'])
                             itemRemove(own['obHit']['slot'], status['inventory'])
                         else:
                             print('saude esta no maximo')

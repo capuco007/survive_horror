@@ -1,3 +1,4 @@
+from ast import literal_eval
 from builtins import print
 from xml.etree.ElementTree import TreeBuilder
 import bge
@@ -18,11 +19,13 @@ def start(cont):
     
     own['arm'] = [arm for arm in own.childrenRecursive if 'player_arm' in arm]
     own['isMove'] = 0
-    own['time_scene_pass'] = 0
+    own['scene_pass'] = 0
     own['dor_open'] = False
     own['bauOpen'] = False
     own['invetOpen'] = False
     own['openBauTime'] = 0
+    if status['scene'] !='':
+        status['scene'] = ''
     if status['pos_spw']:
         own.worldPosition = status['pos_spw']
         status['pos_spw'] = []
@@ -32,11 +35,34 @@ def abrir_portas(cont):
     tc = bge.logic.keyboard.inputs
     coll_dor = cont.sensors['Collision']
     scene = own.scene
-    keys = status['inventory']
+    inventory = status['inventory']
+    msg = status['exib_msg']
     
     if coll_dor.positive:
-
         o = coll_dor.hitObject.groupObject
+        # porta fechada
+        if o['open'] == False:
+            if tc[bge.events.SPACEKEY].activated:
+                if inventory:
+                    for i in inventory :
+                        if 'key' in i:
+                            if i['key'] == o['keyPass']:
+                                status['exib_msg'] = 'destravou'
+                                o['open'] = True
+
+                            else:
+                                status['exib_msg'] = o['msg']
+                else:
+                        
+                    status['exib_msg'] = o['msg']
+        # porta aberta
+        else:
+            if tc[bge.events.SPACEKEY].activated:
+                status['scene'] = o['local']
+                status['pos_spw'] = literal_eval(o['position'])
+        
+    else:
+        status['exib_msg'] = 'none'
        
 def pegar_items(cont):
     own = cont.owner
@@ -81,10 +107,6 @@ def movement(cont):
    
    
     own['isMove'] = char.walkDirection
-
-def msg(cont):
-    own = cont.owner
-    msg = status['exib_msg']
         
 def atirar(cont):
     own = cont.owner
@@ -115,6 +137,13 @@ def abrir_bau(cont):
     else:
         status['call_bau'] = False
 
+def transicao_scene(cont):
+    own = cont.owner
+    scene = own.scene
+    if status['scene_pass'] == True:
+        scene.replace(status['scene'])
+
+
 def update(cont):
     own = cont.owner
     up = cont.sensors['update']
@@ -125,8 +154,8 @@ def update(cont):
         pegar_items(cont)
         abrir_portas(cont)
         abrir_bau(cont)
+        transicao_scene(cont)
         if status['shotin_time'] >0:
             status['shotin_time']-=1
 
-        if own['time_scene_pass'] >1:
-            own['time_scene_pass'] -= 1
+    
