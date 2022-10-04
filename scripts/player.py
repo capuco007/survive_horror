@@ -67,47 +67,66 @@ def movement(cont):
     x = tc[bge.events.DKEY].active - tc[bge.events.AKEY].active
     y = tc[bge.events.WKEY].active - tc[bge.events.SKEY].active
 
+    open_bau = status['open_bau']
+    open_invent = status['open_invent']
+
+    if not open_bau and not open_invent:
    
-    char.walkDirection = Vector([x,y,0]).normalized()*0.08
+        char.walkDirection = Vector([x,y,0]).normalized()*0.08
+
+    else:
+        char.walkDirection = Vector([0,0,0]).normalized()*0.08
         
    
    
    
     own['isMove'] = char.walkDirection
 
-def setMunision(cont):
-    own = cont.owner
-
-def abrir_inventario(cont):
-    own = cont.owner
-    tc = bge.logic.keyboard.inputs
-    
-def abrir_bau(cont):
-    own = cont.owner
-    coll_bau  =cont.sensors['coll_bau']
-    tc = bge.logic.keyboard.inputs
-   
 def msg(cont):
     own = cont.owner
     msg = status['exib_msg']
         
 def atirar(cont):
+    own = cont.owner
     tc = bge.logic.keyboard.inputs
-    ms = bge.logic.mouse.inputs
-    if not status['open_invent']:
-        if ms[bge.events.LEFTMOUSE].activated and status['shotinTime'] == 0 and status['player']['bala_pistola']>0:
-            status['shotinTime'] = 30
-            status['player']['bala_pistola'] -=1
-            print(status['player']['bala_pistola'])
+    ms = cont.sensors['Mouse']
+    if ms.positive:
+
+        if not status['open_invent'] and not status['open_bau']:
+            if status['shotin_time'] ==0:
+                status['shotin_time'] = 30
+                arma = status['player']['arma_mao']
+                if arma !=  '':
+                    if status['player']['bala_'+arma] >0:
+                        status['player']['bala_'+arma] -=1
+                        print(status['player']['bala_'+arma])
+                    else:
+                        bge.logic.sendMessage('reload')
+
+def abrir_bau(cont):
+    own = cont.owner
+    coll = cont.sensors['coll_bau'] 
+    tc = bge.logic.keyboard.inputs 
+    invent_open = status['open_invent']
+
+    if coll.positive:
+        status['call_bau'] = True
+
+    else:
+        status['call_bau'] = False
 
 def update(cont):
     own = cont.owner
-    movement(cont)
-    pegar_items(cont)
-    abrir_inventario(cont)
-    abrir_bau(cont)
-    atirar(cont)
-    abrir_portas(cont)
+    up = cont.sensors['update']
 
-    if own['time_scene_pass'] >1:
-        own['time_scene_pass'] -= 1
+    if up.positive:
+        
+        movement(cont)
+        pegar_items(cont)
+        abrir_portas(cont)
+        abrir_bau(cont)
+        if status['shotin_time'] >0:
+            status['shotin_time']-=1
+
+        if own['time_scene_pass'] >1:
+            own['time_scene_pass'] -= 1

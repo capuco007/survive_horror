@@ -2,11 +2,16 @@ import bge
 from bge.logic import globalDict as gd
 
 gd['game_status'] = {
+        'call_bau':False,
         'shotin_time':0,
         'reload_time':0,
         'reload': False,
-        'open_bau':True,
-        'open_invent': True,
+        'open_bau':False,
+        'open_invent': False,
+        'max_bala_pistola': 30,
+        'max_bala_shtogun': 20,
+        'max_bala_metralha': 50,
+        'fading':0,
 
         'exib_msg': 'none',
 
@@ -27,10 +32,7 @@ gd['game_status'] = {
 
         },
         'inventory':[
-            {'nome':'metralha','tipo':'arma'},
-            {'nome':'pistola','tipo':'arma'},
-            {'nome':'key_0','tipo':'key'},
-            {'nome':'med_kit','tipo':'cura'}
+           
 
         ],
         'bau':[],
