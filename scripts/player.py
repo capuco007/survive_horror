@@ -24,6 +24,8 @@ def start(cont):
     own['bauOpen'] = False
     own['invetOpen'] = False
     own['openBauTime'] = 0
+    foco_mira_eix = own.childrenRecursive.get('foco_mira_eix')
+    
     if status['scene'] !='':
         status['scene'] = ''
     if status['pos_spw']:
@@ -43,18 +45,20 @@ def abrir_portas(cont):
         # porta fechada
         if o['open'] == False:
             if tc[bge.events.SPACEKEY].activated:
-                if inventory:
-                    for i in inventory :
+                item = [it for it in inventory if 'key' in it]
+                if item:
+                    for i in inventory:
                         if 'key' in i:
-                            if i['key'] == o['keyPass']:
-                                status['exib_msg'] = 'destravou'
-                                o['open'] = True
-
+                            if i['nome'] == o['keyPass']:
+                                o['open']  = True
+                                status['exib_msg'] = 'Voce destravou esta Porta'
                             else:
                                 status['exib_msg'] = o['msg']
+        
+                    
                 else:
-                        
                     status['exib_msg'] = o['msg']
+
         # porta aberta
         else:
             if tc[bge.events.SPACEKEY].activated:
@@ -112,8 +116,10 @@ def atirar(cont):
     own = cont.owner
     tc = bge.logic.keyboard.inputs
     ms = cont.sensors['Mouse']
+    point = own.childrenRecursive.get('point')
     if ms.positive:
-
+        ray = own.rayCastTo(point,own.getDistanceTo(point),'enemy')
+        print(ray)
         if not status['open_invent'] and not status['open_bau']:
             if status['shotin_time'] ==0:
                 status['shotin_time'] = 30
@@ -121,7 +127,11 @@ def atirar(cont):
                 if arma !=  '':
                     if status['player']['bala_'+arma] >0:
                         status['player']['bala_'+arma] -=1
-                        print(status['player']['bala_'+arma])
+                        if ray:
+                            o = ray.groupObject
+                            o['life'] -= status['potencia_'+ arma] + o['resistencia']
+                            
+
                     else:
                         bge.logic.sendMessage('reload')
 
@@ -143,11 +153,26 @@ def transicao_scene(cont):
     if status['scene_pass'] == True:
         scene.replace(status['scene'])
 
+def mirar(cont):
+    own = cont.owner
+    ms = bge.logic.mouse.inputs
+    foco_mira = cont.sensors['foco_mira']
+    
+    MouseTrack = cont.actuators['MouseTrack']
+    if ms[bge.events.RIGHTMOUSE].active:
+        if foco_mira.positive:
+
+            enemy = foco_mira.hitObject
+            dir = own.worldPosition - enemy.worldPosition
+            own.alignAxisToVect( dir ,1 ,1.0 )
+            cont.deactivate(MouseTrack)
+        else:
+            cont.activate(MouseTrack)
 
 def update(cont):
     own = cont.owner
     up = cont.sensors['update']
-
+    
     if up.positive:
         
         movement(cont)
@@ -155,6 +180,7 @@ def update(cont):
         abrir_portas(cont)
         abrir_bau(cont)
         transicao_scene(cont)
+       
         if status['shotin_time'] >0:
             status['shotin_time']-=1
 
