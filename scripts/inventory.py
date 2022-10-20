@@ -183,6 +183,10 @@ def abrir_inventario_bau(cont):
     bau_open = status['open_bau']
     open_invent = status['open_invent']
     coll_bau = status['call_bau']
+    listScene = bge.logic.getSceneList()
+   
+   
+
     
 
     if coll_bau:
@@ -190,10 +194,15 @@ def abrir_inventario_bau(cont):
             if actF == 0:
                 status['open_bau'] = True
                 fading.playAction('fadingAction',0,12,play_mode = 0)
+                if '_game_test' in listScene:
+                    print(listScene)
+                    listScene['_game_test'].suspend()
         if bau_open == True and tc[bge.events.SPACEKEY].activated:
             if actF == 12:
                 status['open_bau'] = False
                 fading.playAction('fadingAction',12,0,play_mode = 0)
+                if '_game_test' in listScene:
+                    listScene['_game_test'].resume()
         if actF >= 7:
             bau.worldPosition.x = 0
         if actF <= 7:
@@ -204,11 +213,16 @@ def abrir_inventario_bau(cont):
             if actF == 0:
                 status['open_invent']= True
                 fading.playAction('fadingAction',0,12,play_mode = 0)
+                if '_game_test' in listScene:
+                    print(listScene)
+                    listScene['_game_test'].suspend()
 
         if open_invent == True and tc[bge.events.QKEY].activated:
             if actF == 12:
                 status['open_invent'] = False
                 fading.playAction('fadingAction',12,0,play_mode = 0)
+                if '_game_test' in listScene:
+                    listScene['_game_test'].resume()
 
         if actF >= 7:
             inventory.worldPosition.x = 1.4
@@ -223,10 +237,13 @@ def abrir_inventario_bau(cont):
 
 def update(cont):
     slots(cont)
+    own = cont.owner
     usar_item_mover_item(cont)
     abrir_inventario_bau(cont)
+    scene = own.scene
     tc = bge.logic.keyboard.inputs
     if tc[bge.events.RKEY].activated:
         recarregar(cont)
+    
 
 

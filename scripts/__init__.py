@@ -2,10 +2,15 @@ import bge
 from bge.logic import globalDict as gd
 
 gd['game_status'] = {
+        'agarrado': False,
         'scene_pass': False,
         'scene':'',
         'call_bau':False,
         'shotin_time':0,
+        'shotin_time_pistola':30,
+        'shotin_time_shotgun':60,
+        'shotin_time_metralha':10,
+        'shotin_time_faca':5,
         'reload_time':0,
         'reload': False,
         'open_bau':False,
