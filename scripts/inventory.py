@@ -99,15 +99,23 @@ def recarregar(cont):
     for balas in list_Balas:
         bala_recarga = status['player'][arma+'_capacity'] - status['player']['bala_'+arma]
         if bala_recarga == 0:
+            
             break
+            
 
         if balas['quant'] < bala_recarga:
+            #status['regarregar'] = 200
             status['player']['bala_'+arma] += balas['quant']
             balas['quant'] = 0
         elif balas['quant']>= bala_recarga:
+            status['regarregar'] = 50
             balas['quant'] -= bala_recarga
             status['player']['bala_'+arma] += bala_recarga
+        elif balas['quant']<= bala_recarga:
+            print('no_bala')
         if balas['quant'] == 0:
+            bge.logic.sendMessage('no_bala')
+            
             itemRemove(status['inventory'].index(balas), status['inventory'])
 
 def usar_item_mover_item(cont):
@@ -143,7 +151,6 @@ def usar_item_mover_item(cont):
                         own['obHit'] = None
                     else:
                         itemAdd(itemRemovido, status['bau'])
-                        print(itemRemovido)
                         own['obHit'] = None
                         if itemRemovido['nome'] == status['player']['arma_mao']:
                             status['player']['arma_mao'] = ''
@@ -154,12 +161,15 @@ def usar_item_mover_item(cont):
                 
                 # se o Bau estiver fechado
                 else:
-                    if status['inventory'][own['obHit']['slot']]['tipo'] == 'arma':
+                    arma = status['inventory'][own['obHit']['slot']]['tipo']
+                    arma_nome = status['inventory'][own['obHit']['slot']]['nome']
+                    if arma == 'arma' and arma_nome !=  'faca':
                         if status['player']['arma_mao'] != status['inventory'][own['obHit']['slot']]['nome']:
                             status['player']['arma_mao'] = status['inventory'][own['obHit']['slot']]['nome']
                             print(status['player']['arma_mao'],'sim e uma arma')
                         else:
                             recarregar(cont)
+                            status['regarregar'] = 1
 
                                     
 
@@ -190,14 +200,14 @@ def abrir_inventario_bau(cont):
     
 
     if coll_bau:
-        if bau_open == False and tc[bge.events.SPACEKEY].activated:
+        if bau_open == False and tc[bge.events.QKEY].activated:
             if actF == 0:
                 status['open_bau'] = True
                 fading.playAction('fadingAction',0,12,play_mode = 0)
                 if '_game_test' in listScene:
                     print(listScene)
                     listScene['_game_test'].suspend()
-        if bau_open == True and tc[bge.events.SPACEKEY].activated:
+        if bau_open == True and tc[bge.events.QKEY].activated:
             if actF == 12:
                 status['open_bau'] = False
                 fading.playAction('fadingAction',12,0,play_mode = 0)
@@ -243,7 +253,12 @@ def update(cont):
     scene = own.scene
     tc = bge.logic.keyboard.inputs
     if tc[bge.events.RKEY].activated:
-        recarregar(cont)
-    
+        arma = status['player']['arma_mao']
+        if arma!='' and  arma!='faca' and status['agarrado'] == False:
+            recarregar(cont)
+            
 
+    
+    
+    
 

@@ -2,6 +2,7 @@ import bge
 from bge.logic import globalDict as gd
 
 gd['game_status'] = {
+        'regarregar':0,
         'agarrado': False,
         'scene_pass': False,
         'scene':'',

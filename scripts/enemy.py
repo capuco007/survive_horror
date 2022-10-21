@@ -12,6 +12,7 @@ def start(cont):
     own['agarrao'] = False
     own['atackTime'] = 0
     own['pl_arm'] = [o for o in scene.objects if 'foco_mira_eix' in o]
+    own['dano_pl'] = 0
 def update(cont):
     own = cont.owner
     Steering = cont.actuators['Steering']
@@ -20,12 +21,23 @@ def update(cont):
     z_arm = own.childrenRecursive.get('z_arm')
     dis = own.getDistanceTo(own['pl'][0])
     alain(cont)
+    if own['dano_pl'] == 49:
+        if status['player']['saude'] >0:
+            status['player']['saude'] -= 5
+            
+
+    if own['dano_pl']>0:
+        own['dano_pl'] -= 1
 
     if own['atackTime'] >0:
         own['atackTime']-=1
+        if own['dano_pl'] == 0:
+            own['dano_pl'] = 50
+
     if own['atackTime'] == 0:
         own['agarrao'] = False
         status['agarrado'] = False
+
     if own['ativo'] and   own['atackTime'] == 0:
         if dis < 3 and own['atacar'] == 0:
             own['atacar'] = 200
@@ -48,6 +60,7 @@ def update(cont):
             else:
                  cont.deactivate(Steering)
     else:
+        cont.deactivate(Steering)
         z_arm.playAction('agarrao_z',33,80,play_mode = 2,blendin = 6)
         if dis< 20:
             own['ativo'] = True
@@ -64,16 +77,16 @@ def atacar(cont):
 
 
     if own['atacar'] >170:
-       
-        
-        own.applyMovement([0,0.03,0],True)
+    
         z_arm.playAction('agarrao_z',15,30,play_mode = 0,blendin = 6)
+
+    if own['atacar'] >190:
+         own.applyMovement([0,0.03,0],True)
 
     if own['atacar'] >170:
         cont.deactivate(Steering)
-    else:
-        cont.activate(Steering)
-    if own['atacar'] < 3:
+   
+    if own['atacar'] < 50:
         if radar.positive:  
             o = radar.hitObject
            
@@ -84,6 +97,7 @@ def agarrar(cont,o):
 
     if o :
         own['atackTime'] = 150
+        status['regarregar'] = 0
         own['agarrao'] = True
         status['agarrado'] = True
         o.worldPosition = pos_play.worldPosition
