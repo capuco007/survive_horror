@@ -17,6 +17,8 @@ def start(cont):
     own['dano_pl'] = 0
     own['soltar'] = 0
     own['recuo'] = 0
+    own['dano_para_player'] = 0
+    own['vivo'] = True
 
 def update(cont):
     own = cont.owner
@@ -26,39 +28,52 @@ def update(cont):
     z_arm = own.childrenRecursive.get('z_arm')
     dis = own.getDistanceTo(own['pl'][0])
     tc = bge.logic.keyboard.inputs
-    anim(cont)
     
-    if own['tempo_atacar']>0:
-        own['tempo_atacar']-=1
-    # se o zumbi nao estiver ativo
-    if not own['ativo'] and dis < 5:
-        own['ativo'] = True
-    if own['soltar'] < -0:
-        own['soltar'] +=1
+    obGroup = own.groupObject
+    if obGroup['life'] > 0:
+        anim(cont)
+        if own['dano_para_player'] >0:
+            own['dano_para_player'] -=1
 
-    # se o zumbi estiver ativo
-    if own['ativo'] and own['atack'] == False:
-        seguir.target = own['pl'][0]
-        seguir.navmesh = own['m'][0]
-        seguir.velocity = 0.6
-        if dis >3 and  own['soltar'] == 0:
-            cont.activate(seguir)
-            own['is_mov'] = True
-        else:
-            atacar(cont)
-            own['is_mov'] = False
+        
+        if own['tempo_atacar']>0:
+            own['tempo_atacar']-=1
+        # se o zumbi nao estiver ativo
+        if not own['ativo'] and dis < 5:
+            own['ativo'] = True
+        if own['soltar'] < -0:
+            own['soltar'] +=1
 
-    if own['soltar'] ==10:
-        own['atack'] =False
-        status['agarrado'] = False
-        dir = own['pl_arm'][0].worldPosition - own.worldPosition
-        own.alignAxisToVect(dir, 1, 0.5)
-        own.alignAxisToVect([0,0,1], 2, 1.0)
-        own.applyMovement([0,-0.5,0],True)
-        own['soltar'] = -50
+        # se o zumbi estiver ativo
+        if own['ativo'] and own['atack'] == False:
+            seguir.target = own['pl'][0]
+            seguir.navmesh = own['m'][0]
+            seguir.velocity = 0.6
+            if dis >3 and  own['soltar'] == 0:
+                cont.activate(seguir)
+                own['is_mov'] = True
+            else:
+                atacar(cont)
+                own['is_mov'] = False
 
-    if own['soltar'] < -20:
-        own.applyMovement([0,-0.05,0],True)
+        if own['soltar'] ==10:
+            own['atack'] =False
+            status['agarrado'] = False
+            dir = own['pl_arm'][0].worldPosition - own.worldPosition
+            own.alignAxisToVect(dir, 1, 0.5)
+            own.alignAxisToVect([0,0,1], 2, 1.0)
+            own.applyMovement([0,-0.5,0],True)
+            own['soltar'] = -50
+
+        if own['soltar'] < -20:
+            own.applyMovement([0,-0.05,0],True)
+
+    else:
+        if own['vivo']:
+            cont.deactivate(seguir)
+            own['z_arm'][0].playAction('death',1,94,play_mode = 0,blendin = 5)
+            own['vivo'] = False
+            own.suspendDynamics(True)
 
 def anim(cont):
     own = cont.owner
@@ -68,14 +83,19 @@ def anim(cont):
     
     if  own['ativo']:
         if own['atack'] == False:
-            if own['tempo_atacar'] < 75:
+            if own['tempo_atacar'] < 60:
                 if own['soltar'] == 0:
                     own['z_arm'][0].playAction('walk_z',1,41,play_mode = 1,blendin = 5)
             if own['tempo_atacar'] >75:
-                own['z_arm'][0].playAction('agarrao_z',10,25,play_mode = 0,blendin = 5)
+                own['z_arm'][0].playAction('agarrao_z',7,25,play_mode = 0,blendin = 5)
         else:
             if status['agarrado']:
                 own['z_arm'][0].playAction('agarrao_z',25,81,play_mode = 2,blendin = 5)
+                if own['dano_para_player'] == 0:
+                    own['dano_para_player'] = 80
+                if own['dano_para_player'] == 79:
+                    if status['player']['saude'] >0:
+                        status['player']['saude'] -= 5
                 if own['soltar'] == 0:
                     own['soltar'] = 100
                 if tc[bge.events.SPACEKEY].activated and own['soltar']>0:
@@ -105,7 +125,7 @@ def atacar(cont):
         own.alignAxisToVect([0,0,1], 2, 1.0)
         own.applyMovement([0,0.05,0],True)
 
-    if radar.positive and  own['soltar'] == 0:
+    if radar.positive and  own['soltar'] == 0 and status['agarrado'] == False:
         own['atack'] = True
         own['tempo_atacar'] = 0
         o = radar.hitObject 

@@ -157,6 +157,7 @@ def atirar(cont):
                                     o['life'] -= status['potencia_'+ arma] + o['resistencia']
                                     ob['soltar'] = -50
                                     ob['ativo'] = True
+                                    print(o['life'])
 
                             else:
                                 if status['agarrado'] == False:
@@ -200,9 +201,11 @@ def mirar(cont):
         if foco_mira.positive:
 
             enemy = foco_mira.hitObject
-            dir = own.worldPosition - enemy.worldPosition
-            own.alignAxisToVect( dir ,1 ,0.5 )
-            own.alignAxisToVect([0,0,1], 2, 1.0)
+            ob = enemy.groupObject
+            if ob['life']>0:
+                dir = own.worldPosition - enemy.worldPosition
+                own.alignAxisToVect( dir ,1 ,0.5 )
+                own.alignAxisToVect([0,0,1], 2, 1.0)
             
 
             #cont.deactivate(MouseTrack)
