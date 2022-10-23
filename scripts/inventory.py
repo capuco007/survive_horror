@@ -252,7 +252,7 @@ def update(cont):
     abrir_inventario_bau(cont)
     scene = own.scene
     tc = bge.logic.keyboard.inputs
-    if tc[bge.events.RKEY].activated:
+    if tc[bge.events.RKEY].activated and status['shotin_time'] == 0:
         arma = status['player']['arma_mao']
         if arma!='' and  arma!='faca' and status['agarrado'] == False:
             recarregar(cont)

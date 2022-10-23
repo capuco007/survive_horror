@@ -1,73 +1,94 @@
 import bge
 from bge.logic import globalDict as gd
 status: dict = gd['game_status']
+from mathutils import Vector
 def start(cont):
     own = cont.owner
     scene = own.scene
     own['pl'] = [o for o in scene.objects if 'player' in o]
     own['m'] = [o for o in scene.objects if 'nav' in o]
+    own['z_arm'] = [o for o in own.childrenRecursive if 'z_arm' in o]
     own['is_mov'] = False
     own['ativo'] = False
-    own['atacar'] = 0
+    own['tempo_atacar'] = 0
     own['agarrao'] = False
-    own['atackTime'] = 0
+    own['atack'] = False
     own['pl_arm'] = [o for o in scene.objects if 'foco_mira_eix' in o]
     own['dano_pl'] = 0
+    own['soltar'] = 0
+    own['recuo'] = 0
+
 def update(cont):
     own = cont.owner
-    Steering = cont.actuators['Steering']
+    seguir = cont.actuators['Steering']
     colision = cont.sensors['Collision']
     radar =  cont.sensors['Radar']
     z_arm = own.childrenRecursive.get('z_arm')
     dis = own.getDistanceTo(own['pl'][0])
-    alain(cont)
-    if own['dano_pl'] == 49:
-        if status['player']['saude'] >0:
-            status['player']['saude'] -= 5
-            
+    tc = bge.logic.keyboard.inputs
+    anim(cont)
+    
+    if own['tempo_atacar']>0:
+        own['tempo_atacar']-=1
+    # se o zumbi nao estiver ativo
+    if not own['ativo'] and dis < 5:
+        own['ativo'] = True
+    if own['soltar'] < -0:
+        own['soltar'] +=1
 
-    if own['dano_pl']>0:
-        own['dano_pl'] -= 1
-
-    if own['atackTime'] >0:
-        own['atackTime']-=1
-        if own['dano_pl'] == 0:
-            own['dano_pl'] = 50
-
-    if own['atackTime'] == 0:
-        own['agarrao'] = False
-        status['agarrado'] = False
-
-    if own['ativo'] and   own['atackTime'] == 0:
-        if dis < 3 and own['atacar'] == 0:
-            own['atacar'] = 200
-
-
+    # se o zumbi estiver ativo
+    if own['ativo'] and own['atack'] == False:
+        seguir.target = own['pl'][0]
+        seguir.navmesh = own['m'][0]
+        seguir.velocity = 0.6
+        if dis >3 and  own['soltar'] == 0:
+            cont.activate(seguir)
+            own['is_mov'] = True
         else:
-            cont.deactivate(Steering)
-        if own['atacar'] < 170:
-                z_arm.playAction('walk_z',1,42,play_mode = 1)
+            atacar(cont)
+            own['is_mov'] = False
 
-        if own['m']:
-            if not own['agarrao']:
-        
-                Steering.navmesh = own['m'][0]
-                if own['pl']:
-                    Steering.target = own['pl'][0]
+    if own['soltar'] ==10:
+        own['atack'] =False
+        status['agarrado'] = False
+        dir = own['pl_arm'][0].worldPosition - own.worldPosition
+        own.alignAxisToVect(dir, 1, 0.5)
+        own.alignAxisToVect([0,0,1], 2, 1.0)
+        own.applyMovement([0,-0.5,0],True)
+        own['soltar'] = -50
 
-                    cont.activate(Steering)
-                    own['is_mov'] = True
-            else:
-                 cont.deactivate(Steering)
+    if own['soltar'] < -20:
+        own.applyMovement([0,-0.05,0],True)
+
+def anim(cont):
+    own = cont.owner
+    tc = bge.logic.keyboard.inputs
+    if own['soltar'] == 49:
+        own['z_arm'][0].playAction('agarrao_z',82,126,play_mode = 1,blendin = 5, speed = 4)
+    
+    if  own['ativo']:
+        if own['atack'] == False:
+            if own['tempo_atacar'] < 75:
+                if own['soltar'] == 0:
+                    own['z_arm'][0].playAction('walk_z',1,41,play_mode = 1,blendin = 5)
+            if own['tempo_atacar'] >75:
+                own['z_arm'][0].playAction('agarrao_z',10,25,play_mode = 0,blendin = 5)
+        else:
+            if status['agarrado']:
+                own['z_arm'][0].playAction('agarrao_z',25,81,play_mode = 2,blendin = 5)
+                if own['soltar'] == 0:
+                    own['soltar'] = 100
+                if tc[bge.events.SPACEKEY].activated and own['soltar']>0:
+                    own['soltar'] -= 10
+
     else:
-        cont.deactivate(Steering)
-        z_arm.playAction('agarrao_z',33,80,play_mode = 2,blendin = 6)
-        if dis< 20:
-            own['ativo'] = True
+        if own['soltar'] == 0:
+            own['z_arm'][0].playAction('idle_z',1,131,play_mode = 1,blendin = 5)
+    
+    
 
-    if own['atacar'] >0:
-        atacar(cont)
-        own['atacar'] -=1
+
+    
 def atacar(cont):
     own = cont.owner
     radar =  cont.sensors['Radar']
@@ -75,36 +96,36 @@ def atacar(cont):
     dis = own.getDistanceTo(own['pl'][0])
     Steering = cont.actuators['Steering']
 
+    if own['tempo_atacar'] == 0:
+        own['tempo_atacar'] = 90
+        
+    if  own['tempo_atacar'] > 75  and  own['soltar'] == 0:
+        dir = own['pl_arm'][0].worldPosition - own.worldPosition
+        own.alignAxisToVect(dir, 1, 0.5)
+        own.alignAxisToVect([0,0,1], 2, 1.0)
+        own.applyMovement([0,0.05,0],True)
 
-    if own['atacar'] >170:
-    
-        z_arm.playAction('agarrao_z',15,30,play_mode = 0,blendin = 6)
+    if radar.positive and  own['soltar'] == 0:
+        own['atack'] = True
+        own['tempo_atacar'] = 0
+        o = radar.hitObject 
+        agarrar(cont,o)
+    else:
+        if own['tempo_atacar'] == 0:
+            own['atack'] = False
 
-    if own['atacar'] >190:
-         own.applyMovement([0,0.03,0],True)
-
-    if own['atacar'] >170:
-        cont.deactivate(Steering)
-   
-    if own['atacar'] < 50:
-        if radar.positive:  
-            o = radar.hitObject
-           
-            agarrar(cont,o)
 def agarrar(cont,o):
     own = cont.owner
     pos_play = own.childrenRecursive.get('pos_play')
 
     if o :
-        own['atackTime'] = 150
         status['regarregar'] = 0
-        own['agarrao'] = True
         status['agarrado'] = True
         o.worldPosition = pos_play.worldPosition
-        
+        alain(cont)
 def alain(cont):
     own = cont.owner
-    if own['atackTime'] >0:
+    if own['atack'] :
         dir = own['pl_arm'][0].worldPosition - own.worldPosition
         own['pl_arm'][0].alignAxisToVect(dir, 1, 0.5)
         own['pl_arm'][0].alignAxisToVect([0,0,1], 2, 1.0)

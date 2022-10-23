@@ -153,13 +153,24 @@ def atirar(cont):
 
                                 if ray:
                                     o = ray.groupObject
+                                    ob = ray
                                     o['life'] -= status['potencia_'+ arma] + o['resistencia']
-                                
+                                    ob['soltar'] = -50
+                                    ob['ativo'] = True
 
                             else:
                                 if status['agarrado'] == False:
                                     bge.logic.sendMessage('reload') 
-                                    #status['regarregar'] = 50
+                                    
+                                    no_bala(cont)
+
+# Adicionar os sons dos tiros          #status['regarregar'] = 50
+def no_bala(cont):
+    own = cont.owner
+    arma = status['player']['arma_mao']
+    shot_time = 1 * status['shotin_time_'+arma]
+    
+    print(shot_time)
 
 def abrir_bau(cont):
     own = cont.owner
@@ -304,10 +315,9 @@ def update(cont):
         transicao_scene(cont)
         anim(cont)
         walkDir(cont)
-        print(status['shotin_time'])
         if status['shotin_time'] >0:
             status['shotin_time']-=1
         if status['regarregar'] >0:
-            status['regarregar'] -=1
+            status['regarregar'] -=2
 
     
