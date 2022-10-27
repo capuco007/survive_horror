@@ -9,8 +9,8 @@ gd['game_status'] = {
         'call_bau':False,
         'shotin_time':0,
         'shotin_time_pistola':40,
-        'shotin_time_shotgun':60,
-        'shotin_time_metralha':5,
+        'shotin_time_shotgun':70,
+        'shotin_time_metralha':15,
         'shotin_time_faca':5,
         'reload_time':0,
         'reload': False,
@@ -35,10 +35,10 @@ gd['game_status'] = {
             'metralha_capacity':50,
             'scene':'',
             'saude': 50,
-            'arma_mao': '',
-            'bala_pistola': 0,
-            'bala_shotgun': 0,
-            'bala_metralha': 0,
+            'arma_mao': 'pistola',
+            'bala_pistola': 10,
+            'bala_shotgun': 12,
+            'bala_metralha': 50,
            
            
 

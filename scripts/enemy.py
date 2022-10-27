@@ -69,11 +69,13 @@ def update(cont):
             own.applyMovement([0,-0.05,0],True)
 
     else:
+
         if own['vivo']:
             cont.deactivate(seguir)
             own['z_arm'][0].playAction('death',1,94,play_mode = 0,blendin = 5)
             own['vivo'] = False
             own.suspendDynamics(True)
+            own.suspendPhysics(True)
 
 def anim(cont):
     own = cont.owner

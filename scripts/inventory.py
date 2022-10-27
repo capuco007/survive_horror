@@ -89,6 +89,7 @@ def recarregar(cont):
     own = cont.owner
     arma = status['player']['arma_mao']
     list_Balas = []
+    
     for item in status['inventory']:
         if item['nome'] == 'bala_'+arma:
             list_Balas.append(item)
@@ -107,8 +108,9 @@ def recarregar(cont):
             #status['regarregar'] = 200
             status['player']['bala_'+arma] += balas['quant']
             balas['quant'] = 0
+            status['regarregar'] = 130
         elif balas['quant']>= bala_recarga:
-            status['regarregar'] = 50
+            status['regarregar'] = 130
             balas['quant'] -= bala_recarga
             status['player']['bala_'+arma] += bala_recarga
         elif balas['quant']<= bala_recarga:
@@ -251,6 +253,7 @@ def update(cont):
     usar_item_mover_item(cont)
     abrir_inventario_bau(cont)
     scene = own.scene
+    print(status['regarregar'])
     tc = bge.logic.keyboard.inputs
     if tc[bge.events.RKEY].activated and status['shotin_time'] == 0:
         arma = status['player']['arma_mao']
