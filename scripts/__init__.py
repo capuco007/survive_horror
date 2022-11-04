@@ -1,7 +1,19 @@
+from importlib.resources import path
+import json
 import bge
 from bge.logic import globalDict as gd
 
+gd['database'] = {}
+
 gd['game_status'] = {
+        'index_enemy':0,
+        'list_enemyes':[],
+        'descri_item':'',
+        'add_most_item':'',
+        'most_item':0,
+        'tempo_morte':0,
+        'soltar':0,
+        'atacando':0,
         'regarregar':0,
         'agarrado': False,
         'scene_pass': False,
@@ -31,7 +43,7 @@ gd['game_status'] = {
             
         'player':{
             'pistola_capacity':10,
-            'shotgun_capacity':8,
+            'shotgun_capacity':12,
             'metralha_capacity':50,
             'scene':'',
             'saude': 50,
@@ -49,3 +61,16 @@ gd['game_status'] = {
         ],
         'bau':[],
     }
+
+def carregar_database():
+    from pathlib import Path
+    from bge.logic import expandPath
+    from json import loads
+    path = Path(expandPath('//database')).resolve()
+    for f in path.iterdir():
+        if f.suffix == '.json':
+            data = loads(f.open(mode='r',encoding='utf-8').read())
+            gd['database'][f.stem] = data
+            print('carregou o arquivo',f)
+
+carregar_database()

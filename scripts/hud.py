@@ -35,6 +35,7 @@ def conta_balas(cont):
             own['balas'] = status['player']['bala_'+arma]
         else:
             own['balas'] = '%'
+            
 def life_bar(cont):
     own = cont.owner
     scene = own.scene

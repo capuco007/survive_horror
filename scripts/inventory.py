@@ -170,8 +170,13 @@ def usar_item_mover_item(cont):
                             status['player']['arma_mao'] = status['inventory'][own['obHit']['slot']]['nome']
                             print(status['player']['arma_mao'],'sim e uma arma')
                         else:
-                            recarregar(cont)
-                            status['regarregar'] = 1
+                            arm_mao = status['player']['arma_mao']
+                            if status['player']['bala_'+ arm_mao] < status['player'][arm_mao+'_capacity']:
+                                recarregar(cont)
+                                status['regarregar'] = 20
+                            else:
+                                print('FULL')
+                                status['player']['arma_mao'] = ''
 
                                     
 
@@ -199,69 +204,112 @@ def abrir_inventario_bau(cont):
    
    
 
-    
+    if status['player']['saude'] >0:
+        if status['add_most_item'] == '':
 
-    if coll_bau:
-        if bau_open == False and tc[bge.events.QKEY].activated:
-            if actF == 0:
-                status['open_bau'] = True
-                fading.playAction('fadingAction',0,12,play_mode = 0)
-                if '_game_test' in listScene:
-                    print(listScene)
-                    listScene['_game_test'].suspend()
-        if bau_open == True and tc[bge.events.QKEY].activated:
-            if actF == 12:
-                status['open_bau'] = False
-                fading.playAction('fadingAction',12,0,play_mode = 0)
-                if '_game_test' in listScene:
-                    listScene['_game_test'].resume()
-        if actF >= 7:
-            bau.worldPosition.x = 0
-        if actF <= 7:
-            bau.worldPosition.x = -17
+            if coll_bau:
+                if bau_open == False and tc[bge.events.QKEY].activated:
+                    if actF == 0:
+                        status['open_bau'] = True
+                        fading.playAction('fadingAction',0,12,play_mode = 0)
+                        if '_game_test' in listScene:
+                            print(listScene)
+                            listScene['_game_test'].suspend()
+                if bau_open == True and tc[bge.events.QKEY].activated:
+                    if actF == 12:
+                        status['open_bau'] = False
+                        fading.playAction('fadingAction',12,0,play_mode = 0)
+                        if '_game_test' in listScene:
+                            listScene['_game_test'].resume()
+                if actF >= 7:
+                    bau.worldPosition.x = 0
+                if actF <= 7:
+                    bau.worldPosition.x = -17
 
-    else:
-        if open_invent == False and tc[bge.events.QKEY].activated:
-            if actF == 0:
-                status['open_invent']= True
-                fading.playAction('fadingAction',0,12,play_mode = 0)
-                if '_game_test' in listScene:
-                    print(listScene)
-                    listScene['_game_test'].suspend()
+            else:
+                if open_invent == False and tc[bge.events.QKEY].activated:
+                    if actF == 0:
+                        status['open_invent']= True
+                        fading.playAction('fadingAction',0,12,play_mode = 0)
+                        if '_game_test' in listScene:
+                            print(listScene)
+                            listScene[0].suspend()
 
-        if open_invent == True and tc[bge.events.QKEY].activated:
-            if actF == 12:
-                status['open_invent'] = False
-                fading.playAction('fadingAction',12,0,play_mode = 0)
-                if '_game_test' in listScene:
-                    listScene['_game_test'].resume()
+                if open_invent == True and tc[bge.events.QKEY].activated:
+                    if actF == 12:
+                        status['open_invent'] = False
+                        fading.playAction('fadingAction',12,0,play_mode = 0)
+                        if '_game_test' in listScene:
+                            listScene[0].resume()
 
-        if actF >= 7:
-            inventory.worldPosition.x = 1.4
-        if actF <= 7:
-            inventory.worldPosition.x = 8.5
-    if status['fading'] >0:
-        status['fading'] -=1
+                if actF >= 7:
+                    inventory.worldPosition.x = 1.4
+                if actF <= 7:
+                    inventory.worldPosition.x = 8.5
+            if status['fading'] >0:
+                status['fading'] -=1
+                    
+
+            if status['fading'] <-0:
+                status['fading'] +=1
+
+def most_item(cont):
+    own = cont.owner
+    print(status['descri_item'])
+    inventory = status['inventory']
+    if len(inventory) <8:
+        if status['add_most_item'] != '':
+            if status['descri_item'] != '':
+                descri_item = own.childrenRecursive.get('descri_item')
+                descri_item['texto'] = status['descri_item']
             
-
-    if status['fading'] <-0:
-        status['fading'] +=1
+            item_most = own.childrenRecursive.get('item_most')
+            item_most.replaceMesh(status['add_most_item'])
+            item_most.visible = True
+            if status['most_item'] ==0:
+                tc = bge.logic.keyboard.inputs
+                if tc[bge.events.SPACEKEY].activated:
+                    status['most_item'] = 0
+                    status['add_most_item'] = ''
+                    listScene = bge.logic.getSceneList()
+                    listScene[0].resume()
+                    status['descri_item'] = ''
+                    descri_item['texto'] = None
+                    bge.logic.sendMessage('remove_most_item')
+    else:
+        status['add_most_item'] = ''
+        descri_item = own.childrenRecursive.get('descri_item')
+        item_most = own.childrenRecursive.get('item_most')
+        descri_item['texto'] = 'O inventário esta cheio !'
+        item_most.visible = False
+        if status['most_item'] ==0:
+            tc = bge.logic.keyboard.inputs
+            if tc[bge.events.SPACEKEY].activated:
+                descri_item['texto'] = None
+                bge.logic.sendMessage('remove_most_item')
 
 def update(cont):
     slots(cont)
     own = cont.owner
     usar_item_mover_item(cont)
-    abrir_inventario_bau(cont)
+    if status['shotin_time'] == 0 :
+        abrir_inventario_bau(cont)
     scene = own.scene
-    print(status['regarregar'])
+    listScene = bge.logic.getSceneList()
+
     tc = bge.logic.keyboard.inputs
     if tc[bge.events.RKEY].activated and status['shotin_time'] == 0:
         arma = status['player']['arma_mao']
         if arma!='' and  arma!='faca' and status['agarrado'] == False:
             recarregar(cont)
             
-
+    if status['most_item'] >0:
+        status['most_item'] -=1
+        print(status['most_item'])
     
     
+    tc = bge.logic.keyboard.inputs
+    if tc[bge.events.SPACEKEY].activated and status['most_item'] == 0:
+        listScene[0].resume()
     
 

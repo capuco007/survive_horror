@@ -1,0 +1,8 @@
+{
+    "bala_pistola": {
+        "mesh": "bala_pistola",
+        "quant": 10,
+        "tipo": "municao",
+        "descri_item_most": "most_bala_pistola"
+    }
+}
