@@ -6,6 +6,7 @@ from bge.logic import globalDict as gd
 gd['database'] = {}
 
 gd['game_status'] = {
+        'afast':False,
         'index_enemy':0,
         'list_enemyes':[],
         'descri_item':'',
@@ -23,7 +24,7 @@ gd['game_status'] = {
         'shotin_time_pistola':40,
         'shotin_time_shotgun':70,
         'shotin_time_metralha':15,
-        'shotin_time_faca':5,
+        'shotin_time_faca':50,
         'reload_time':0,
         'reload': False,
         'open_bau':False,
@@ -35,6 +36,7 @@ gd['game_status'] = {
         'potencia_pistola': 10,
         'potencia_metralha': 15,
         'potencia_shotgun': 30,
+        'potencia_faca': 5,
 
         'exib_msg': 'none',
 
@@ -46,8 +48,8 @@ gd['game_status'] = {
             'shotgun_capacity':12,
             'metralha_capacity':50,
             'scene':'',
-            'saude': 50,
-            'arma_mao': 'pistola',
+            'saude': 100,
+            'arma_mao': 'faca',
             'bala_pistola': 10,
             'bala_shotgun': 12,
             'bala_metralha': 50,

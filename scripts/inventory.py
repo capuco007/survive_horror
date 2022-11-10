@@ -213,7 +213,6 @@ def abrir_inventario_bau(cont):
                         status['open_bau'] = True
                         fading.playAction('fadingAction',0,12,play_mode = 0)
                         if '_game_test' in listScene:
-                            print(listScene)
                             listScene['_game_test'].suspend()
                 if bau_open == True and tc[bge.events.QKEY].activated:
                     if actF == 12:
@@ -232,7 +231,6 @@ def abrir_inventario_bau(cont):
                         status['open_invent']= True
                         fading.playAction('fadingAction',0,12,play_mode = 0)
                         if '_game_test' in listScene:
-                            print(listScene)
                             listScene[0].suspend()
 
                 if open_invent == True and tc[bge.events.QKEY].activated:
@@ -255,7 +253,6 @@ def abrir_inventario_bau(cont):
 
 def most_item(cont):
     own = cont.owner
-    print(status['descri_item'])
     inventory = status['inventory']
     if len(inventory) <8:
         if status['add_most_item'] != '':
@@ -266,7 +263,7 @@ def most_item(cont):
             item_most = own.childrenRecursive.get('item_most')
             item_most.replaceMesh(status['add_most_item'])
             item_most.visible = True
-            if status['most_item'] ==0:
+            if status['most_item'] ==0 and not status['open_invent']:
                 tc = bge.logic.keyboard.inputs
                 if tc[bge.events.SPACEKEY].activated:
                     status['most_item'] = 0
@@ -284,7 +281,7 @@ def most_item(cont):
         item_most.visible = False
         if status['most_item'] ==0:
             tc = bge.logic.keyboard.inputs
-            if tc[bge.events.SPACEKEY].activated:
+            if tc[bge.events.SPACEKEY].activated and not status['open_invent']:
                 descri_item['texto'] = None
                 bge.logic.sendMessage('remove_most_item')
 
@@ -309,7 +306,7 @@ def update(cont):
     
     
     tc = bge.logic.keyboard.inputs
-    if tc[bge.events.SPACEKEY].activated and status['most_item'] == 0:
+    if tc[bge.events.SPACEKEY].activated and status['most_item'] == 0 and not status['open_invent']:
         listScene[0].resume()
     
 

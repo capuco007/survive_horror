@@ -4,5 +4,10 @@
         "quant": 10,
         "tipo": "municao",
         "descri_item_most": "most_bala_pistola"
+    },
+    "key_0": {
+        "mesh": "key_0",
+        "tipo": "key",
+        "descri_item_most": "serve para abrir uma porta"
     }
 }

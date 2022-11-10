@@ -187,8 +187,8 @@ def atirar(cont):
                                     o = ray.groupObject
                                     ob = ray
                                     o['life'] -= status['potencia_'+ arma] + o['resistencia']
-                                    ob['dano'] = 50
-                                    ob['ativo'] = True
+                                    ob['hited'] = True
+                                    ob['is_mov'] = True
                                     print(ob)
                                     
 
@@ -197,6 +197,24 @@ def atirar(cont):
                                     bge.logic.sendMessage('reload') 
                                     
                                     no_bala(cont)
+                        if arma == 'faca':
+                            
+                            status['shotin_time'] = status['shotin_time_'+arma]
+                            if status['shotin_time'] == status['shotin_time_'+arma]:
+                                pass
+                                #bge.logic.sendMessage('shotin')
+                                #cont.activate('tiro_'+arma)
+                                    
+
+                            if ray:
+                                o = ray.groupObject
+                                ob = ray
+                                dis = own.getDistanceTo(ob)
+                                if dis < 3:
+                                    o['life'] -= status['potencia_'+ arma] + o['resistencia']
+                                    ob['hited'] = True
+                                    ob['is_mov'] = True
+                                    print(ob)
 
 # Adicionar os sons dos tiros          #status['regarregar'] = 50
 def no_bala(cont):
@@ -231,7 +249,7 @@ def mirar(cont):
     tc = bge.logic.keyboard.inputs
     scene = own.scene
     #MouseTrack = cont.actuators['MouseTrack']
-    if ms[bge.events.RIGHTMOUSE].active :
+    if ms[bge.events.RIGHTMOUSE].activated :
         if status['player']['arma_mao'] != '':
             if foco_mira.positive:
                 distancia = 99999
@@ -242,9 +260,11 @@ def mirar(cont):
                         enemy = o
   
                 if enemy:
-                    dir = own.worldPosition - enemy.worldPosition
-                    own.alignAxisToVect( dir ,1 ,1.0 )
-                    own.alignAxisToVect([0,0,1], 2, 1.0)
+                    en = enemy.groupObject
+                    if en['life']>0:
+                        dir = own.worldPosition - enemy.worldPosition
+                        own.alignAxisToVect( dir ,1 ,1.0 )
+                        own.alignAxisToVect([0,0,1], 2, 1.0)
         
             
     else:
@@ -303,7 +323,7 @@ def anim(cont):
         'idle_faca': 181,
         'walk_faca': 32,
         'run_faca': 23,
-        'atirar_faca': 46,
+        'atirar_faca': 20,
         'mirar_faca': 77,
         
         #danos
@@ -375,7 +395,11 @@ def anim(cont):
                     own['arm'][0].playAction('atirar_'+arma,1,frameAnim['atirar_'+arma],play_mode = 0,blendin = 1,speed = 2)
 
     else:
-        own['arm'][0].playAction('death',1,94,play_mode = 0,blendin = 5)             
+        own['arm'][0].playAction('death',1,160,play_mode = 0,blendin = 5)   
+        frame  = own['arm'][0].getActionFrame(0)    
+        if frame >159:
+            listScene = bge.logic.getSceneList()
+            listScene[0].suspend()      
 def update(cont):
     own = cont.owner
     up = cont.sensors['update']

@@ -9,11 +9,11 @@ def start(cont: SCA_PythonController):
 
 def aplicar_props(own):
     group = own.groupObject
-    item_db = gd['database']['items'].get(own.get('nome'))
+    item_db = gd['database']['items'].get(group.get('nome'))
     if item_db:
         for key in item_db.keys():
-            if not key in own:
-                own[key] = item_db[key]
+            if not key in group:
+                group[key] = item_db[key]
     mesh = group.get('mesh')
     if mesh:
         own.replaceMesh(mesh)
