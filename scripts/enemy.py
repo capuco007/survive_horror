@@ -10,6 +10,7 @@ scene = bge.logic.getCurrentScene()
 player = [o for o in scene.objects if 'player' in o]
 soltar = 0
 
+
 def start(cont):
     own = cont.owner
     scene = own.scene
@@ -25,6 +26,7 @@ def start(cont):
     own['vivo'] = True
     status['afast'] = False
     own['dano_pl'] = 0
+    own['pos_play'] = [o for o in own.childrenRecursive if 'pos_play' in o]
     
     
 
@@ -99,7 +101,7 @@ def walk(cont,distancia,Steering):
     Steering.navmesh = own['m'][0]
     cont.activate(Steering)
     if status['atacando'] == 0:
-        own['z_arm'][0].playAction('walk_z',1,41,play_mode = 1,blendin = 5)
+        own['z_arm'][0].playAction('walk_z_2',1,122,play_mode = 1,blendin = 5)
     if own['hited']:
         own['state'] = 'hited'
     if distancia < 2 and status['agarrado'] == False:
@@ -120,7 +122,6 @@ def atack(cont,radar):
 def grab_atack(cont):
     own = cont.owner
     tc = bge.logic.keyboard.inputs
-    print(own['soltar'])
     status['agarrado'] = True
     if own['dano_pl'] == 0:
         own['dano_pl'] = 50
@@ -139,8 +140,15 @@ def grab_atack(cont):
         status['agarrado'] = False
     if status['player']['saude']>0:
         own['z_arm'][0].playAction('agarrao_z',25,81,play_mode = 2,blendin = 5)
+        player[0].worldPosition = own['pos_play'][0].worldPosition
+        
+        foco_mira_eix = player[0].childrenRecursive.get('foco_mira_eix')
+        dir = own.worldPosition - foco_mira_eix.worldPosition
+        foco_mira_eix.alignAxisToVect(-dir, 1, 0.5)
+        foco_mira_eix.alignAxisToVect([0,0,1], 2, 1.0)
+
     if status['player']['saude']<=0:
-        own['z_arm'][0].playAction('agarrao_z',25,81,play_mode = 2,blendin = 5)
+        own['z_arm'][0].playAction('devora_z',1,209,play_mode = 2,blendin = 5)
     
 def hited(cont):
     own = cont.owner

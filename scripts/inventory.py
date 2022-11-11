@@ -124,19 +124,62 @@ def usar_item_mover_item(cont):
     own = cont.owner
     scene = own.scene
     Mouse_Over = cont.sensors['Mouse_Over']
+    #Mouse_Over_Equip = cont.sensors['Mouse_Over_equip']
     Mouse_Left = cont.sensors['Mouse']
     botao = scene.objects['botao']
+    botao_equip = scene.objects['botao_equip']
+    botao_Reload = scene.objects['botao_Reload']
     Mouse_Use = cont.sensors['Mouse_Use']
+    Mouse_Use_Equip = cont.sensors['Mouse_Use_Equip']
+    Mouse_Realod = cont.sensors['Mouse_Realod']
+    if Mouse_Left.positive:
+        if Mouse_Realod.positive:
+            recarregar(cont)
+            status['regarregar'] = 20
+            botao_Reload.worldPosition = [10,10,1]
+            botao_equip.worldPosition = [10,10,1]
+            botao.worldPosition = [10,10,1]
+
+        if Mouse_Use_Equip.positive:
+            status['player']['arma_mao'] = ''
+            botao_equip.worldPosition = [10,10,1]
+            botao_Reload.worldPosition = [10,10,1]
+            botao.worldPosition = [10,10,1]
+
+
+    if not status['open_invent'] and not status['open_bau']:
+        botao.worldPosition = [10,10,1]
+        botao_equip.worldPosition = [10,10,1]
+        botao_Reload.worldPosition = [10,10,1]
 
     if status['open_invent'] or status['open_bau']:
         
         if Mouse_Over.positive and Mouse_Left.positive:
             own['obHit'] = Mouse_Over.hitObject.groupObject
-            
-            if own['obHit']['slot']< len(status[own['obHit']['type']]):
 
-                botao.worldPosition.x = own['obHit'].worldPosition.x
-                botao.worldPosition.y = own['obHit'].worldPosition.y - 0.5
+            arma_nome = status['inventory'][own['obHit']['slot']]['nome']
+            arm_mao = status['player']['arma_mao']
+
+            if status['player']['arma_mao'] == arma_nome:
+                botao_equip.worldPosition.x = own['obHit'].worldPosition.x
+                botao_equip.worldPosition.y = own['obHit'].worldPosition.y - 0.5
+                botao.worldPosition = [10,10,1]
+                if arm_mao != 'faca':
+                    botao_Reload.worldPosition.x = own['obHit'].worldPosition.x
+                    botao_Reload.worldPosition.y = own['obHit'].worldPosition.y - 1.0
+            else:
+                item = status['inventory'][own['obHit']['slot']]['tipo']
+                if item !='municao':
+                    if own['obHit']['slot']< len(status[own['obHit']['type']]):
+
+                        botao.worldPosition.x = own['obHit'].worldPosition.x
+                        botao.worldPosition.y = own['obHit'].worldPosition.y - 0.5
+                        botao_equip.worldPosition = [10,10,1]
+                else:
+                    botao.worldPosition = [10,10,1]
+                    botao_equip.worldPosition = [10,10,1]
+
+                
            
 
        
@@ -172,11 +215,12 @@ def usar_item_mover_item(cont):
                         else:
                             arm_mao = status['player']['arma_mao']
                             if status['player']['bala_'+ arm_mao] < status['player'][arm_mao+'_capacity']:
-                                recarregar(cont)
-                                status['regarregar'] = 20
+                                pass
+                                #recarregar(cont)
+                                #status['regarregar'] = 20
                             else:
                                 print('FULL')
-                                status['player']['arma_mao'] = ''
+                                #status['player']['arma_mao'] = ''
 
                                     
 

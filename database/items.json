@@ -3,11 +3,34 @@
         "mesh": "bala_pistola",
         "quant": 10,
         "tipo": "municao",
-        "descri_item_most": "most_bala_pistola"
+        "descri_item_most": "bala_pistola"
+    },
+    "bala_shotgun": {
+        "mesh": "bala_shotgun",
+        "quant": 10,
+        "tipo": "municao",
+        "descri_item_most": "bala_shotgun"
+    },
+    "shotgun": {
+        "mesh": "most_shotgun",
+        "tipo": "arma",
+        "descri_item_most": "arma calibre 12"
+    },
+    "pistola": {
+        "mesh": "most_pistola",
+        "tipo": "arma",
+        "descri_item_most": "arma calibre 45"
+    },
+    "metralha": {
+        "mesh": "most_metralha",
+        "tipo": "arma",
+        "descri_item_most": "fuzil de assalto AR-15"
     },
     "key_0": {
         "mesh": "key_0",
         "tipo": "key",
+        "key": 1,
         "descri_item_most": "serve para abrir uma porta"
+        
     }
 }

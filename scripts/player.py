@@ -395,9 +395,11 @@ def anim(cont):
                     own['arm'][0].playAction('atirar_'+arma,1,frameAnim['atirar_'+arma],play_mode = 0,blendin = 1,speed = 2)
 
     else:
-        own['arm'][0].playAction('death',1,160,play_mode = 0,blendin = 5)   
+        own['arm'][0].playAction('death_2',1,106,play_mode = 0,blendin = 5,speed = 2)   
         frame  = own['arm'][0].getActionFrame(0)    
-        if frame >159:
+        print(frame)
+        if frame >105:
+
             listScene = bge.logic.getSceneList()
             listScene[0].suspend()      
 def update(cont):
