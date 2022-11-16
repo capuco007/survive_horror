@@ -2,10 +2,11 @@ from importlib.resources import path
 import json
 import bge
 from bge.logic import globalDict as gd
-
+gd['save_status_inRam'] = []
 gd['database'] = {}
 
 gd['game_status'] = {
+        'dano': 0,
         'afast':False,
         'index_enemy':0,
         'list_enemyes':[],
@@ -49,7 +50,7 @@ gd['game_status'] = {
             'metralha_capacity':50,
             'scene':'',
             'saude': 100,
-            'arma_mao': 'faca',
+            'arma_mao': 'shotgun',
             'bala_pistola': 10,
             'bala_shotgun': 12,
             'bala_metralha': 50,

@@ -28,6 +28,8 @@ def start(cont):
     own['speed'] = 0.0
     own['most_item'] = 0
     own['list_enemyes'] = []
+    own['oHited'] = None
+    own['arma_mao_pl'] = [o for o in own.childrenRecursive if 'arma_da_mao' in o]
     foco_mira_eix = own.childrenRecursive.get('foco_mira_eix')
     foco_mira_eix.alignAxisToVect([0,0,1], 2, 1.0)
     if status['scene'] !='':
@@ -86,10 +88,11 @@ def pegar_items(cont):
     if coll_itens.positive:
         o = coll_itens.hitObject.groupObject
         
-        if tc[bge.events.SPACEKEY].activated:
+        if tc[bge.events.SPACEKEY].activated and status['agarrado'] == False:
             mostra_item(cont,o)
             inventory = status['inventory']
-            if len(inventory)< 8:
+            print(len(inventory)+1)
+            if len(inventory)< 9:
                 item = {}
                 
                 # Pegar propriedades da instância de grupo do item
@@ -98,9 +101,9 @@ def pegar_items(cont):
                 itemAdd(item, inventory)
                 o.endObject()
                     # alterar game-status
-            else:
+            if len(inventory) >8:
                 
-                status['exib_msg'] = 'nao ha mais espaço no inventario '# mostra que o inventario esta cheio
+                status['exib_msg'] = 'Nao ha mais espaço no inventario '# mostra que o inventario esta cheio
 
 
 def mostra_item(cont,o):
@@ -110,7 +113,7 @@ def mostra_item(cont,o):
     #status['most_item'] = 1000
     if o:
         status['descri_item'] = o['descri_item_most']
-        status['add_most_item'] = 'most_'+o['nome']
+        status['add_most_item'] = o['mesh']
         bge.logic.sendMessage('add_most_item')
         status['most_item'] = 1000
         item_most = own.childrenRecursive.get('item_most')
@@ -133,22 +136,27 @@ def movement(cont):
             own['speed'] =0.07
     else:
         own['speed'] = 0.03
-    if status['regarregar'] ==0 and status['shotin_time'] ==0 and not status['agarrado'] and  status['player']['saude'] >0:
-        if not status['agarrado']:
-            if not open_bau and not open_invent :
-                if not ms[bge.events.RIGHTMOUSE].active:
-                    char.walkDirection = Vector([x,y,0]).normalized()*own['speed']
-                
-                else:
-                    if status['player']['arma_mao'] == '':
-                        char.walkDirection = Vector([x,y,0]).normalized()*own['speed'] 
+    if status['dano'] == 0:
+        if status['regarregar'] ==0 and status['shotin_time'] ==0 and not status['agarrado'] and  status['player']['saude'] >0:
+            if not status['agarrado']:
+                if not open_bau and not open_invent :
+                    if not ms[bge.events.RIGHTMOUSE].active:
+                        char.walkDirection = Vector([x,y,0]).normalized()*own['speed']
+                    
                     else:
-                        char.walkDirection = Vector([0,0,0]).normalized()*own['speed'] 
-            else:
-                char.walkDirection = Vector([0,0,0]).normalized()*own['speed'] 
+                        if status['player']['arma_mao'] == '':
+                            char.walkDirection = Vector([x,y,0]).normalized()*own['speed'] 
+                        else:
+                            char.walkDirection = Vector([0,0,0]).normalized()*own['speed'] 
+                else:
+                    char.walkDirection = Vector([0,0,0]).normalized()*own['speed'] 
+        else:
+            char.walkDirection = Vector([0,0,0]).normalized()*own['speed'] 
     else:
-        char.walkDirection = Vector([0,0,0]).normalized()*own['speed'] 
-        
+        if  own['oHited']:
+            dir = own.worldPosition - own['oHited'].worldPosition
+            char.walkDirection = Vector(dir).normalized()*own['speed']
+
    
    
    
@@ -285,10 +293,16 @@ def walkDir(cont):
     char = bge.constraints.getCharacter(own)
     dir = char.walkDirection
     foco_mira_eix = own.childrenRecursive.get('foco_mira_eix')
+    
     if dir.length != 0:
-        
-        foco_mira_eix.alignAxisToVect(-dir, 1, 0.5)
-        foco_mira_eix.alignAxisToVect([0,0,1], 2, 1.0)
+        if  own['oHited']:
+            print(own['oHited'])
+            dir = own.worldPosition - own['oHited'].worldPosition
+            foco_mira_eix.alignAxisToVect(dir, 1, 0.5)
+            foco_mira_eix.alignAxisToVect([0,0,1], 2, 1.0)
+        else:
+            foco_mira_eix.alignAxisToVect(-dir, 1, 0.5)
+            foco_mira_eix.alignAxisToVect([0,0,1], 2, 1.0)
 
 def anim(cont):
     own = cont.owner
@@ -337,75 +351,107 @@ def anim(cont):
 
     }
     if status['player']['saude'] >0:
-        if status['regarregar'] > 60:
-            bge.logic.sendMessage('reload')
-            own['arm'][0].playAction('recarregar_'+arma,1,frameAnim['run_'+arma],play_mode = 0,blendin = 2,speed = 2,priority = 0)
-    
-        if  status['agarrado'] and status['regarregar'] ==0:
-            own['arm'][0].playAction('agarrado',1,24,play_mode = 2,blendin = 5)
+        if status['dano'] ==0:
+            if status['regarregar'] > 60:
+                bge.logic.sendMessage('reload')
+                own['arm'][0].playAction('recarregar_'+arma,1,frameAnim['run_'+arma],play_mode = 0,blendin = 2,speed = 2,priority = 0)
+        
+            if  status['agarrado'] and status['regarregar'] ==0:
+                own['arm'][0].playAction('agarrado',1,24,play_mode = 2,blendin = 5)
 
-        if not status['agarrado'] and status['regarregar'] ==0:
-            if tc[bge.events.LEFTSHIFTKEY].active:
-                own['speed'] = 0.07
-            else:
-                own['speed'] = 0.04
-
-                # Mover Sem Armas
-            if  status['shotin_time'] ==0:
-                if status['player']['arma_mao'] == '':
-                    if dir.length != 0:
-                        if status['player']['saude'] >30:
-                            if tc[bge.events.LEFTSHIFTKEY].active:
-                                own['arm'][0].playAction('run_faca',1,23,play_mode = 1,blendin = 5)
-                                
-                            else:
-                                own['arm'][0].playAction('walk',1,32,play_mode = 1,blendin = 5)
-                        else:
-                            own['arm'][0].playAction('machucado',1,31,play_mode = 1,blendin = 5)
-                        
-                    else:
-                        if status['player']['saude'] >30:
-                            own['arm'][0].playAction('idle',1,181,play_mode = 1,blendin = 5)
-                        else:
-                            own['arm'][0].playAction('idle',1,181,play_mode = 1,blendin = 5)
-
+            if not status['agarrado'] and status['regarregar'] ==0:
+                if tc[bge.events.LEFTSHIFTKEY].active:
+                    own['speed'] = 0.07
                 else:
-                    
-                    if not ms[bge.events.RIGHTMOUSE].active:
+                    own['speed'] = 0.04
+
+                    # Mover Sem Armas
+                if  status['shotin_time'] ==0:
+                    if status['player']['arma_mao'] == '':
                         if dir.length != 0:
                             if status['player']['saude'] >30:
                                 if tc[bge.events.LEFTSHIFTKEY].active:
-                                    own['arm'][0].playAction('run_'+arma,1,frameAnim['run_'+arma],play_mode = 1,blendin = 5)
+                                    own['arm'][0].playAction('run_faca',1,23,play_mode = 1,blendin = 5)
                                     
                                 else:
-                                    own['arm'][0].playAction('walk_'+arma,1,frameAnim['walk_'+arma],play_mode = 1,blendin = 5)
+                                    own['arm'][0].playAction('walk',1,32,play_mode = 1,blendin = 5)
                             else:
-                                own['arm'][0].playAction('machucado',1,31,play_mode = 1,blendin = 5,speed = 0.9)
+                                own['arm'][0].playAction('machucado',1,31,play_mode = 1,blendin = 5)
+                            
                         else:
                             if status['player']['saude'] >30:
-                                own['arm'][0].playAction('idle_'+arma,1,frameAnim['idle_'+arma],play_mode = 1,blendin = 5)
+                                own['arm'][0].playAction('idle',1,181,play_mode = 1,blendin = 5)
                             else:
-                                own['arm'][0].playAction('idle_mach',1,32,play_mode = 2,blendin = 5)
-                    else:
-                    
-                        if status['shotin_time'] == 0:
-                            own['arm'][0].playAction('mirar_'+arma,1,frameAnim['idle_'+arma],play_mode = 1,blendin = 5)
-            else:
-                if status['shotin_time'] >  status['shotin_time_'+arma]/ 1.2:
-                    own['arm'][0].playAction('atirar_'+arma,1,frameAnim['atirar_'+arma],play_mode = 0,blendin = 1,speed = 2)
+                                own['arm'][0].playAction('idle',1,181,play_mode = 1,blendin = 5)
 
+                    else:
+                        
+                        if not ms[bge.events.RIGHTMOUSE].active:
+                            if dir.length != 0:
+                                if status['player']['saude'] >30:
+                                    if tc[bge.events.LEFTSHIFTKEY].active:
+                                        own['arm'][0].playAction('run_'+arma,1,frameAnim['run_'+arma],play_mode = 1,blendin = 5)
+                                        
+                                    else:
+                                        own['arm'][0].playAction('walk_'+arma,1,frameAnim['walk_'+arma],play_mode = 1,blendin = 5)
+                                else:
+                                    own['arm'][0].playAction('machucado',1,31,play_mode = 1,blendin = 5,speed = 0.9)
+                            else:
+                                if status['player']['saude'] >30:
+                                    own['arm'][0].playAction('idle_'+arma,1,frameAnim['idle_'+arma],play_mode = 1,blendin = 5)
+                                else:
+                                    own['arm'][0].playAction('idle_mach',1,32,play_mode = 2,blendin = 5)
+                        else:
+                        
+                            if status['shotin_time'] == 0:
+                                own['arm'][0].playAction('mirar_'+arma,1,frameAnim['idle_'+arma],play_mode = 1,blendin = 5)
+                else:
+                    if status['shotin_time'] >  status['shotin_time_'+arma]/ 1.2:
+                          own['arm'][0].playAction('atirar_'+arma,1,frameAnim['atirar_'+arma],play_mode = 0,blendin = 1,speed = 2)
+
+        if status['dano']>0:
+            own['arm'][0].playAction('agarrao_z',82,120,play_mode = 1,blendin = 5)
     else:
-        own['arm'][0].playAction('death_2',1,106,play_mode = 0,blendin = 5,speed = 2)   
-        frame  = own['arm'][0].getActionFrame(0)    
+        scene = own.scene
+        
+        frame  = own['arm'][0].getActionFrame(0) 
+        if frame < 1.5:
+            scene.addObject('bloco_player',own,0)
+        if frame< 105:
+
+            own['arm'][0].playAction('death_2',1,106,play_mode = 0,blendin = 5,speed = 2)   
+        
         print(frame)
         if frame >105:
 
             listScene = bge.logic.getSceneList()
-            listScene[0].suspend()      
+            listScene[0].suspend() 
+            bge.logic.sendMessage('restart')     
+
+def damage(cont):
+    own = cont.owner
+    dano = cont.sensors['dano']
+    if dano.positive and status['dano'] == 0:
+        if status['player']['saude']>0:
+            status['player']['saude'] -= 5
+        status['dano'] = 20
+        own['oHited'] = dano.hitObject
+        
+def hited(cont):
+    own = cont.owner
+
 def update(cont):
     own = cont.owner
     up = cont.sensors['update']
     scenList = bge.logic.getSceneList()
+    if own['arma_mao_pl']:
+
+    
+        if status['player']['arma_mao']:
+            own['arma_mao_pl'][0].replaceMesh('mesh_' + status['player']['arma_mao'])
+            own['arma_mao_pl'][0].visible = True
+        else:
+            own['arma_mao_pl'][0].visible = False
    
     if up.positive:
 
@@ -417,6 +463,10 @@ def update(cont):
         anim(cont)
         walkDir(cont)
         
+        if status['dano'] >0:
+            status['dano'] -=1
+        if status['dano'] == 0:
+            own['oHited'] = None
         
         if status['shotin_time'] >0:
             status['shotin_time']-=1

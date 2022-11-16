@@ -27,6 +27,7 @@ def start(cont):
     status['afast'] = False
     own['dano_pl'] = 0
     own['pos_play'] = [o for o in own.childrenRecursive if 'pos_play' in o]
+    own['time_solt'] = 0
     
     
 
@@ -41,9 +42,12 @@ def state_machine(cont):
     distancia= own.getDistanceTo(pl)
     Steering = cont.actuators['seguir']
     radar = cont.sensors['Radar']
+    if own['time_solt'] >0:
+        own['time_solt'] -=1
+        
 
     if own['vivo']:
-        if status['afast'] and distancia < 3:
+        if status['afast'] and distancia < 2:
             own['state'] = 'hited'
             status['afast'] = False
         if group['life'] <= 0:
@@ -76,7 +80,6 @@ def state_machine(cont):
         
         #own.suspendDynamics(True)
         own.suspendPhysics(True)
-
 
 def death(cont):
     own = cont.owner
@@ -136,33 +139,49 @@ def grab_atack(cont):
         own['soltar'] -=5
     if own['soltar'] == 5:
         own['state'] = 'hited'
+        own['time_solt'] = 50
         status['afast'] = True
         status['agarrado'] = False
     if status['player']['saude']>0:
         own['z_arm'][0].playAction('agarrao_z',25,81,play_mode = 2,blendin = 5)
         player[0].worldPosition = own['pos_play'][0].worldPosition
-        
+        #own.applyMovement([0,-0.03,0], True)
         foco_mira_eix = player[0].childrenRecursive.get('foco_mira_eix')
         dir = own.worldPosition - foco_mira_eix.worldPosition
         foco_mira_eix.alignAxisToVect(-dir, 1, 0.5)
         foco_mira_eix.alignAxisToVect([0,0,1], 2, 1.0)
 
     if status['player']['saude']<=0:
-        own['z_arm'][0].playAction('devora_z',1,209,play_mode = 2,blendin = 5)
+        pl =player[0]
+        distancia= own.getDistanceTo(pl)
+        if distancia<2:
+            own['z_arm'][0].playAction('devora_z',1,209,play_mode = 2,blendin = 5)
     
 def hited(cont):
     own = cont.owner
     frame  = own['z_arm'][0].getActionFrame(0)
-    if frame >= 110:
-        own['hited'] = False
-        own['state'] = 'idle'
-    elif frame < 110:
-        own['z_arm'][0].playAction('agarrao_z',82,120,play_mode = 1,blendin = 5,speed = 2)
-        dir = own.worldPosition - player[0].worldPosition
-        own.alignAxisToVect( -dir , 1 , 1.0 )
-        own.alignAxisToVect( [0,0,1] , 2 , 1.0 )
-        own.applyMovement([0,-0.03,0], True)
-        
+
+    if own['time_solt']  >0:
+        if frame >= 129:
+            own['hited'] = False
+            own['state'] = 'idle'
+        if frame < 130:
+            own['z_arm'][0].playAction('agarrao_z',81,130,play_mode = 1,blendin = 5,speed = 2,priority = 0)
+            dir = own.worldPosition - player[0].worldPosition
+            own.alignAxisToVect( -dir , 1 , 1.0 )
+            own.alignAxisToVect( [0,0,1] , 2 , 1.0 )
+            own.applyMovement([0,-0.03,0], True)
+    else:
+        if frame >= 29:
+            own['hited'] = False
+            own['state'] = 'idle'
+        if frame < 29:
+            own['z_arm'][0].playAction('z_damage',1,30,play_mode = 1,blendin = 5,speed = 2,priority = 0)
+            dir = own.worldPosition - player[0].worldPosition
+            own.alignAxisToVect( -dir , 1 , 1.0 )
+            own.alignAxisToVect( [0,0,1] , 2 , 1.0 )
+            #own.applyMovement([0,-0.03,0], True)
+            
    
     #own['z_arm'][0].playAction('idle_z',1,41,play_mode = 1,blendin = 5)
     #own['z_arm'][0].playAction('agarrao_z',82,126,play_mode = 1,blendin = 5, speed = 8)

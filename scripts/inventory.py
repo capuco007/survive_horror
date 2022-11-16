@@ -13,6 +13,9 @@ def start(cont: SCA_PythonController):
     own['obHit'] = None
     own.setParent(own.groupObject)
     
+def save_status_game(cont):
+    own = cont.owner
+    gd['save_status_inRam'] = []
 
 def itemExists(item, collection):
     # type: (dict, list[dict]) -> bool
@@ -36,7 +39,6 @@ def itemAdd(item, collection):
             if item.get('nome') == invItem.get('nome'):
                 valorTotal = invItem['quant'] + item['quant']
                 resto = valorTotal - status['max_'+str(invItem['nome'])]
-                print(valorTotal,resto)
                 if  invItem['quant'] <status['max_'+str(invItem['nome'])]:
                     invItem['quant'] = valorTotal - resto
                 if resto >0:
@@ -58,11 +60,31 @@ def slots(cont):
    
     lista = status[group['type']]
     
+    
+    
     items  = lista[group['slot']] if group['slot'] < len(lista) else None
     slot_quant = own.childrenRecursive.get('slot_quant')
+    descricao_bau = [o for o in own.childrenRecursive if 'descricao' in o]
+            
     if items:
+
         slot_quant.visible = True
-        own.replaceMesh(status[group['type']][group['slot']]['nome'])
+        descricao_bau[0].visible = True
+        own.replaceMesh(status[group['type']][group['slot']]['mesh'])
+        if  status['open_bau']:
+            if items['descricao_bau']:
+                descricao_bau[0]['descricao'] = status[group['type']][group['slot']]['descricao_bau']
+                descricao_bau[0].visible = True
+                if group['type'] == 'bau':
+                    
+                    if descricao_bau[0].worldPosition.x >0:
+                        descricao_bau[0].worldPosition.x = 1
+            else:
+                descricao_bau[0].worldPosition.x = 1
+        
+        else:
+            descricao_bau[0].visible = False
+            descricao_bau[0]['descricao'] = ''
 
         
 
@@ -84,6 +106,50 @@ def slots(cont):
         slot_quant.visible = False
         slot_quant['quant'] = 0
         own.replaceMesh('vazio')
+        descricao_bau[0].visible = False
+        descricao_bau[0]['descricao'] = ''
+        
+def invent_move(cont):
+    own = cont.owner
+    scene = own.scene
+    Mouse_in = cont.sensors['Mouse_in']
+    Mouse_bau = cont.sensors['Mouse_bau']
+    Mouse_left = cont.sensors['Mouse_left']
+    Mouse_movement = cont.sensors['Mouse_movement']
+    buton_invent = scene.objects['buton_invent']
+    buton_bau = scene.objects['buton_bau']
+    empt_invent = scene.objects['impt_invetory']
+    empt_bau = scene.objects['empt_bau']
+    botao_mover = scene.objects['Mouse_mover']
+    if status['open_bau']:
+        if Mouse_movement.positive and Mouse_left.positive:
+            pos = Mouse_movement.hitPosition
+            
+            if Mouse_bau.positive:
+                botao_mover.worldPosition = [10,10,1]
+                if buton_invent.worldPosition.y > -2.0 and buton_invent.worldPosition.y < 3.0:
+                    buton_bau.worldPosition.y = pos[1]
+                    empt_bau.worldPosition.y = buton_bau.worldPosition.y *3
+                if buton_bau.worldPosition.y > 3.0:
+                    buton_bau.worldPosition.y = 2.9
+                if buton_bau.worldPosition.y < -2.0:
+                    buton_bau.worldPosition.y = -1.9
+                    
+            elif Mouse_in.positive:
+                botao_mover.worldPosition = [10,10,1]
+                if buton_invent.worldPosition.y > -2.0 and buton_invent.worldPosition.y < 3.0:
+                    buton_invent.worldPosition.y = pos[1]
+                    empt_invent.worldPosition.y = buton_invent.worldPosition.y *3
+                if buton_invent.worldPosition.y > 3.0:
+                    buton_invent.worldPosition.y = 2.9
+                if buton_invent.worldPosition.y < -2.0:
+                    buton_invent.worldPosition.y = -1.9
+                    
+    if not status['open_bau']:
+        buton_invent.worldPosition.y = 0.0
+        buton_bau.worldPosition.y = 0.0
+        empt_bau.worldPosition.y = buton_bau.worldPosition.y 
+        empt_invent.worldPosition.y = buton_invent.worldPosition.y
 
 def recarregar(cont):
     own = cont.owner
@@ -129,9 +195,11 @@ def usar_item_mover_item(cont):
     botao = scene.objects['botao']
     botao_equip = scene.objects['botao_equip']
     botao_Reload = scene.objects['botao_Reload']
+    botao_mover = scene.objects['Mouse_mover']
     Mouse_Use = cont.sensors['Mouse_Use']
     Mouse_Use_Equip = cont.sensors['Mouse_Use_Equip']
     Mouse_Realod = cont.sensors['Mouse_Realod']
+    Mouse_mover = cont.sensors['Mouse_mover']
     if Mouse_Left.positive:
         if Mouse_Realod.positive:
             recarregar(cont)
@@ -151,8 +219,9 @@ def usar_item_mover_item(cont):
         botao.worldPosition = [10,10,1]
         botao_equip.worldPosition = [10,10,1]
         botao_Reload.worldPosition = [10,10,1]
+        botao_mover.worldPosition = [10,10,1]
 
-    if status['open_invent'] or status['open_bau']:
+    if status['open_invent'] :
         
         if Mouse_Over.positive and Mouse_Left.positive:
             own['obHit'] = Mouse_Over.hitObject.groupObject
@@ -182,36 +251,46 @@ def usar_item_mover_item(cont):
                 
            
 
-       
-        if own['obHit'] and Mouse_Use.positive and Mouse_Left.positive:
-            if own['obHit']['slot']< len(status[own['obHit']['type']]):
-                botao.worldPosition = [10,10,1]
+       # se o Bau estiver aberto
+    if  status['open_bau']:
+        if Mouse_Over.positive and Mouse_Left.positive:
+            own['obHit'] = Mouse_Over.hitObject.groupObject
+            botao_mover.worldPosition.x = own['obHit'].worldPosition.x
+            botao_mover.worldPosition.y = own['obHit'].worldPosition.y -2.5
 
-                # se o Bau estiver aberto
-                if status['open_bau']:
-            
-                    itemRemovido = itemRemove(own['obHit']['slot'], status[own['obHit']['type']])
-                    if own['obHit']['type'] == 'bau':
+        if own['obHit'] and Mouse_mover.positive and Mouse_Left.positive:
+            if own['obHit']['slot']< len(status[own['obHit']['type']]):
+                botao_mover.worldPosition = [10,10,1]
+                
+                if own['obHit']['type'] == 'bau':
+                    inventory = status['inventory']
+                    if len(inventory)< 9:
+                        itemRemovido = itemRemove(own['obHit']['slot'], status[own['obHit']['type']])
                         itemAdd(itemRemovido, status['inventory'])
                         own['obHit'] = None
-                    else:
+                else:
+                    bau = status['bau']
+                    if len(bau)< 10:
+                        itemRemovido = itemRemove(own['obHit']['slot'], status[own['obHit']['type']])
                         itemAdd(itemRemovido, status['bau'])
                         own['obHit'] = None
                         if itemRemovido['nome'] == status['player']['arma_mao']:
                             status['player']['arma_mao'] = ''
-                        
-
-                    
-            
                 
-                # se o Bau estiver fechado
-                else:
+    else:
+        # se o Bau estiver fechado
+        if own['obHit'] and Mouse_Use.positive and Mouse_Left.positive:
+            if own['obHit']['slot']< len(status[own['obHit']['type']]):
+                botao.worldPosition = [10,10,1]
+                
+                
+                if not status['open_bau']:
                     arma = status['inventory'][own['obHit']['slot']]['tipo']
                     arma_nome = status['inventory'][own['obHit']['slot']]['nome']
                     if arma == 'arma' and arma_nome !=  'faca':
                         if status['player']['arma_mao'] != status['inventory'][own['obHit']['slot']]['nome']:
                             status['player']['arma_mao'] = status['inventory'][own['obHit']['slot']]['nome']
-                            print(status['player']['arma_mao'],'sim e uma arma')
+                            
                         else:
                             arm_mao = status['player']['arma_mao']
                             if status['player']['bala_'+ arm_mao] < status['player'][arm_mao+'_capacity']:
@@ -221,7 +300,9 @@ def usar_item_mover_item(cont):
                             else:
                                 print('FULL')
                                 #status['player']['arma_mao'] = ''
-
+                    if arma_nome ==  'faca':
+                        if status['player']['arma_mao'] != status['inventory'][own['obHit']['slot']]['nome']:
+                            status['player']['arma_mao'] = status['inventory'][own['obHit']['slot']]['nome']
                                     
 
                     elif status['inventory'][own['obHit']['slot']]['tipo'] == 'cura':
@@ -297,14 +378,15 @@ def abrir_inventario_bau(cont):
 
 def most_item(cont):
     own = cont.owner
+    scene = own.scene
     inventory = status['inventory']
-    if len(inventory) <8:
+    if len(inventory) <9:
         if status['add_most_item'] != '':
             if status['descri_item'] != '':
                 descri_item = own.childrenRecursive.get('descri_item')
                 descri_item['texto'] = status['descri_item']
             
-            item_most = own.childrenRecursive.get('item_most')
+            item_most = scene.objects['item_most']
             item_most.replaceMesh(status['add_most_item'])
             item_most.visible = True
             if status['most_item'] ==0 and not status['open_invent']:
@@ -322,7 +404,7 @@ def most_item(cont):
         descri_item = own.childrenRecursive.get('descri_item')
         item_most = own.childrenRecursive.get('item_most')
         descri_item['texto'] = 'O inventário esta cheio !'
-        item_most.visible = False
+        #item_most.visible = False
         if status['most_item'] ==0:
             tc = bge.logic.keyboard.inputs
             if tc[bge.events.SPACEKEY].activated and not status['open_invent']:
@@ -337,6 +419,7 @@ def update(cont):
         abrir_inventario_bau(cont)
     scene = own.scene
     listScene = bge.logic.getSceneList()
+    
 
     tc = bge.logic.keyboard.inputs
     if tc[bge.events.RKEY].activated and status['shotin_time'] == 0:
@@ -346,7 +429,7 @@ def update(cont):
             
     if status['most_item'] >0:
         status['most_item'] -=1
-        print(status['most_item'])
+        
     
     
     tc = bge.logic.keyboard.inputs
