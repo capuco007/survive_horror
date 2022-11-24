@@ -17,6 +17,19 @@ def save_status_game(cont):
     own = cont.owner
     gd['save_status_inRam'] = []
 
+    
+    savegame = {
+        'objects': []
+    }
+
+    for o in own.scene.objects:
+        if 'save' in o:
+            savegame['objects'].append(o.name)
+        if 'dor' in o:
+            
+            for prop in o.getPropertyNames():
+                savegame[o.name] = o[prop]
+
 def itemExists(item, collection):
     # type: (dict, list[dict]) -> bool
     """Verifica se o item passado no parâmetro existe na coleção."""
@@ -328,7 +341,7 @@ def abrir_inventario_bau(cont):
     listScene = bge.logic.getSceneList()
    
    
-
+    
     if status['player']['saude'] >0:
         if status['add_most_item'] == '':
 
@@ -337,14 +350,14 @@ def abrir_inventario_bau(cont):
                     if actF == 0:
                         status['open_bau'] = True
                         fading.playAction('fadingAction',0,12,play_mode = 0)
-                        if '_game_test' in listScene:
-                            listScene['_game_test'].suspend()
+                        if len(listScene)> 0:
+                            listScene[0].suspend()
                 if bau_open == True and tc[bge.events.QKEY].activated:
                     if actF == 12:
                         status['open_bau'] = False
                         fading.playAction('fadingAction',12,0,play_mode = 0)
-                        if '_game_test' in listScene:
-                            listScene['_game_test'].resume()
+                        if len(listScene)> 0:
+                            listScene[0].resume()
                 if actF >= 7:
                     bau.worldPosition.x = 0
                 if actF <= 7:
@@ -355,14 +368,14 @@ def abrir_inventario_bau(cont):
                     if actF == 0:
                         status['open_invent']= True
                         fading.playAction('fadingAction',0,12,play_mode = 0)
-                        if '_game_test' in listScene:
+                        if len(listScene)> 0:
                             listScene[0].suspend()
 
                 if open_invent == True and tc[bge.events.QKEY].activated:
                     if actF == 12:
                         status['open_invent'] = False
                         fading.playAction('fadingAction',12,0,play_mode = 0)
-                        if '_game_test' in listScene:
+                        if len(listScene)> 0:
                             listScene[0].resume()
 
                 if actF >= 7:

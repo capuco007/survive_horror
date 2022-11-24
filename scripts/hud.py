@@ -3,6 +3,7 @@ gd = bge.logic.globalDict
 status: dict = gd['game_status']
 def msg(cont):
     own = cont.owner
+    list_scene = bge.logic.getSceneList()
     conta_balas(cont)
     life_bar(cont)
     msg = status['exib_msg']
@@ -14,17 +15,25 @@ def msg(cont):
         own['msg'] = ''
 
     if status['scene'] !='':
+        
         transicao_scene(cont)
+        if status['trade_scene_time'] == 0:
+            status['trade_scene_time'] = 50
 
 def transicao_scene(cont):
     own = cont.owner
     scene = own.scene
+    list_scene = bge.logic.getSceneList()
     fading_hud = scene.objects['fading_hud']
-    fading_hud.playAction('fadingAction_scene',0,20,play_mode = 0)
+    fading_hud.playAction('fadingAction_scene',0,20,play_mode = 0,speed = 0.5)
     frame = fading_hud.getActionFrame(0)
-    print(frame,status['scene'])
-    if frame > 10 and frame < 12:
-        status['scene_pass'] = True
+
+    if status['trade_scene_time']>0:
+        list_scene[0].suspend()
+        status['trade_scene_time'] -=1
+    if status['trade_scene_time'] == 1:
+        list_scene[0].resume()
+    print(status['trade_scene_time'])
 
 def conta_balas(cont):
     own = cont.owner

@@ -17,10 +17,11 @@ status: dict = gd['game_status']
 
 def start(cont):
     own = cont.owner
-    
+    scene = own.scene
+    #gd['save_status_inRam']['last_scene'] = own.scene.name
     own['arm'] = [arm for arm in own.childrenRecursive if 'player_arm' in arm]
     own['isMove'] = 0
-    own['scene_pass'] = 0
+    own['scene_pass'] = False
     own['dor_open'] = False
     own['bauOpen'] = False
     own['invetOpen'] = False
@@ -32,14 +33,22 @@ def start(cont):
     own['arma_mao_pl'] = [o for o in own.childrenRecursive if 'arma_da_mao' in o]
     foco_mira_eix = own.childrenRecursive.get('foco_mira_eix')
     foco_mira_eix.alignAxisToVect([0,0,1], 2, 1.0)
+    status['trade_scene_time'] = 0
     if status['scene'] !='':
         status['scene'] = ''
+        status['scene_pass'] = False
+
+    
     if status['pos_spw']:
         own.worldPosition = status['pos_spw']
         dir = Vector(status['alaing']) - Vector(status['pos_spw'])
-        foco_mira_eix.alignAxisToVect(dir, 1, 1.0)
-        
+        foco_mira_eix.alignAxisToVect(dir, 1, 1.0) 
         status['pos_spw'] = []
+        gd['save_ram']['player_position'] = ''
+    else:
+        if gd['save_ram']['player_position'] !='':
+            own.worldPosition = gd['save_ram']['player_position']
+    
 def collDors(cont):
     own = cont.owner
 
@@ -50,35 +59,38 @@ def abrir_portas(cont):
     scene = own.scene
     inventory = status['inventory']
     msg = status['exib_msg']
-    
-    if coll_dor.positive:
-        o = coll_dor.hitObject.groupObject
-        # porta fechada
-        if o['open'] == False:
-            if tc[bge.events.SPACEKEY].activated:
-                item = [it for it in inventory if 'key' in it]
-                if item:
-                    for i in inventory:
-                        if 'key' in i:
-                            if i['nome'] == o['keyPass']:
-                                o['open']  = True
-                                status['exib_msg'] = 'Voce destravou esta Porta'
-                            else:
-                                status['exib_msg'] = o['msg']
-        
-                    
-                else:
-                    status['exib_msg'] = o['msg']
+    if status['agarrado'] == False:
+        if coll_dor.positive:
+            o = coll_dor.hitObject.groupObject
+            # porta fechada
+            if o['open'] == False:
+                if tc[bge.events.SPACEKEY].activated :
+                    item = [it for it in inventory if 'key' in it]
+                    if item:
+                        for i in inventory:
+                            if 'key' in i:
+                                if i['nome'] == o['keyPass']:
+                                    o['open']  = True
+                                    status['exib_msg'] = 'Voce destravou esta Porta'
+                                else:
+                                    status['exib_msg'] = o['msg']
+            
+                        
+                    else:
+                        status['exib_msg'] = o['msg']
 
-        # porta aberta
+            # porta aberta
+            else:
+                if tc[bge.events.SPACEKEY].activated:
+                    gd['save_ram']['last_scene'] = o['local']
+                    save_status_game(cont)
+                    status['pos_spw'] = literal_eval(o['position'])
+                    status['alaing'] = literal_eval(o['alaing'])
+                    status['scene'] = o['local']
+                    
+            
         else:
-            if tc[bge.events.SPACEKEY].activated:
-                status['scene'] = o['local']
-                status['pos_spw'] = literal_eval(o['position'])
-                status['alaing'] = literal_eval(o['alaing'])
-        
-    else:
-        status['exib_msg'] = 'none'
+            status['exib_msg'] = 'none'
        
 def pegar_items(cont):
     own = cont.owner
@@ -104,7 +116,6 @@ def pegar_items(cont):
             if len(inventory) >8:
                 
                 status['exib_msg'] = 'Nao ha mais espaço no inventario '# mostra que o inventario esta cheio
-
 
 def mostra_item(cont,o):
     own = cont.owner
@@ -172,6 +183,8 @@ def atirar(cont):
     tiro_pistola = cont.actuators['tiro_pistola']
     tiro_shotgun = cont.actuators['tiro_shotgun']
 
+   
+        
     if status['agarrado'] == False and status['regarregar'] == 0:
         if ms.positive and msR.positive:
             arma = status['player']['arma_mao']
@@ -247,9 +260,13 @@ def abrir_bau(cont):
 def transicao_scene(cont):
     own = cont.owner
     scene = own.scene
-    if status['scene_pass'] == True:
+    setScene = cont.actuators['setScene']
+    if status['trade_scene_time'] == 1:
+        pass
+        #setScene.scene = status['scene']
+        #cont.activate(setScene)
         scene.replace(status['scene'])
-
+        
 def mirar(cont):
     own = cont.owner
     ms = bge.logic.mouse.inputs
@@ -262,10 +279,11 @@ def mirar(cont):
             if foco_mira.positive:
                 distancia = 99999
                 enemy = None
-                for o in scene['enemies']:
-                    if o.getDistanceTo(own) <distancia:
-                        distancia = o.getDistanceTo(own)
-                        enemy = o
+                for o in scene.objects:
+                    if 'enemy' in o:
+                        if o.getDistanceTo(own) <distancia:
+                            distancia = o.getDistanceTo(own)
+                            enemy = o
   
                 if enemy:
                     en = enemy.groupObject
@@ -440,13 +458,170 @@ def damage(cont):
 def hited(cont):
     own = cont.owner
 
+def save_status_game(cont):
+    from pprint import pformat
+    
+    own = cont.owner
+    tc = bge.logic.keyboard.inputs
+    
+    save_game_ram = gd['save_ram']
+    scene = own.scene
+    save_game_ram[scene.name] = {}
+
+    for o in scene.objects:
+        if 'save' in o:
+            obj_data = {}
+            for prop in o.getPropertyNames():
+                obj_data[prop] = o[prop]
+                gd['save_ram'][scene.name][o.name] = obj_data
+
+def load_in_disc(cont):
+    own = cont.owner
+    scene = own.scene
+    tc = bge.logic.keyboard.inputs
+    from pprint import pformat
+    ms = cont.sensors['Mouse']
+    msKey = bge.logic.mouse.inputs
+    print(status['trade_scene_time'])
+    if status['trade_scene_time'] >0:
+        status['trade_scene_time'] -=1
+    if ms.positive and msKey[bge.events.LEFTMOUSE].activated:
+        try:
+            with open(bge.logic.expandPath('//save.txt'), 'r') as openedFile:
+                gd['save_ram'] = eval(openedFile.read())
+                print('> Savegame carregado de', openedFile.name)
+                bge.logic.sendMessage('load')
+                if status['trade_scene_time'] == 0:
+                    status['trade_scene_time'] = 60
+        except Exception as e:
+            print('nao achou o save .txt')
+
+    if status['trade_scene_time'] ==1:
+        scene.replace(gd['save_ram']['last_scene'])
+
+
+       
+
+def save_in_dis(cont):
+    own = cont.owner
+    tc = bge.logic.keyboard.inputs
+    from pprint import pformat
+
+    save_game = cont.sensors['save_game']
+    if save_game.positive and tc[bge.events.SPACEKEY].activated:
+        gd['save_ram']['player_position'] = own.worldPosition
+        gd['save_ram']['last_scene'] = own.scene.name
+       
+        with open(bge.logic.expandPath('//save.txt'), 'w') as openedFile:
+            openedFile.write(pformat(gd['save_ram']))
+            print('> Savegame salvo em', openedFile.name)
+        with open(bge.logic.expandPath('//save_pl.txt'), 'w') as openedFile:
+            openedFile.write(pformat(gd['game_status']))
+            print('> Savegame salvo em', openedFile.name)
+        
+def load_game(cont):
+    from pprint import pformat
+    print('carregou static game')
+    scene = cont.owner.scene
+    save_game_ram = gd['save_ram']
+    scene_data = save_game_ram.get(scene.name)
+    scene_last = save_game_ram['last_scene']
+    
+    if scene_last !='' and scene.name != scene_last:
+        status['scene'] = scene_last
+        status['scene_pass'] = False
+
+    if scene_last == scene.name:
+        status['scene'] = ''
+
+    if scene_data:
+        for obj in scene.objects:
+            if 'save' in obj:
+                if obj.name in scene_data.keys():
+                    props = scene_data[obj.name]
+                    for prop in props.keys():
+                        obj[prop] = props[prop]
+                
+                else :
+                    obj.endObject()
+                if 'life' in obj:
+                    if obj['life']<=0:
+                        obj.endObject()
+       
+def save_load(cont):
+    own = cont.owner
+    tc = bge.logic.keyboard.inputs
+    from pprint import pformat
+
+    #load
+    if tc[bge.events.LKEY].activated:
+        try:
+            with open(bge.logic.expandPath('//save.txt'), 'r') as openedFile:
+                gd['save_ram'] = eval(openedFile.read())
+                print('> Savegame carregado de', openedFile.name)
+        except Exception as e:
+            print('nao achou o save .txt')
+
+        try:
+            with open(bge.logic.expandPath('//save_pl.txt'), 'r') as openedFile:
+                gd['game_status'] = eval(openedFile.read())
+                print('> Savegame carregado de', openedFile.name)
+        except Exception as e:
+            print('nao achou o save .txt')
+
+   
+      
+    #save
+
+    if tc[bge.events.HKEY].activated:
+        gd['save_ram']['player_position'] = own.worldPosition
+        gd['save_ram']['last_scene'] = own.scene.name
+        with open(bge.logic.expandPath('//save.txt'), 'w') as openedFile:
+            openedFile.write(pformat(gd['save_ram']))
+            print('> Savegame salvo em', openedFile.name)
+        with open(bge.logic.expandPath('//.save_pltxt'), 'w') as openedFile:
+            openedFile.write(pformat(gd['game_status']))
+            print('> Savegame salvo em', openedFile.name)
+
+def new_game(cont):
+    own = cont.owner
+    scene = own.scene
+    print(status['trade_scene_time'])
+    if status['trade_scene_time'] >0:
+        status['trade_scene_time'] -=1
+    import os
+    ms = bge.logic.mouse.inputs
+    path =bge.logic.expandPath('//save.txt')
+    path2 =bge.logic.expandPath('//save_pl.txt')
+    if ms[bge.events.LEFTMOUSE].activated:
+        bge.logic.sendMessage('new')
+        if not os.path.exists(path) and not os.path.exists(path2):
+            if status['trade_scene_time'] == 0:
+                status['trade_scene_time'] = 60
+        else:
+            bge.logic.restartGame()
+
+        if ms[bge.events.LEFTMOUSE].activated:
+            if os.path.exists(path):
+                os.remove(path)
+                print('deletou')
+            if os.path.exists(path2):
+                os.remove(path2)
+                print('deletou')
+    if status['trade_scene_time'] ==1:
+        scene.replace('_game_test')
+
+   
 def update(cont):
     own = cont.owner
     up = cont.sensors['update']
     scenList = bge.logic.getSceneList()
+    scene = own.scene
+    tc = bge.logic.keyboard.inputs
+    if tc[bge.events.DELKEY].activated:
+        new_game(cont)
+    save_in_dis(cont)
     if own['arma_mao_pl']:
-
-    
         if status['player']['arma_mao']:
             own['arma_mao_pl'][0].replaceMesh('mesh_' + status['player']['arma_mao'])
             own['arma_mao_pl'][0].visible = True
@@ -475,5 +650,6 @@ def update(cont):
         if status['regarregar'] >0:
             status['regarregar'] -=2
         if status['tempo_morte'] ==500:
-            scenList[0].suspend()
+            #scene.suspend()
+            scenList[status['scene']].suspend()
     

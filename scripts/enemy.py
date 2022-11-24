@@ -2,6 +2,7 @@ import bge
 from bge.logic import globalDict as gd
 status: dict = gd['game_status']
 from mathutils import Vector
+import random
 
 kb = bge.logic.keyboard.inputs
 alive = True
@@ -14,12 +15,12 @@ soltar = 0
 def start(cont):
     own = cont.owner
     scene = own.scene
+    o = own.groupObject
     own['pl'] = [o for o in scene.objects if 'player' in o]
     own['m'] = [o for o in scene.objects if 'nav' in o]
     own['z_arm'] = [o for o in own.childrenRecursive if 'z_arm' in o]
     own['pl_arm'] = [o for o in scene.objects if 'foco_mira_eix' in o]
     own['state'] = 'idle'
-    own['is_mov'] = False
     own['hited'] = False
     own['atacar'] = 0
     own['soltar'] = 0
@@ -29,16 +30,28 @@ def start(cont):
     own['pos_play'] = [o for o in own.childrenRecursive if 'pos_play' in o]
     own['time_solt'] = 0
     
-    
-
     if not 'enemies' in scene:
         scene['enemies'] = [] 
     scene['enemies'].append(own)
 
+    if o['is_mov']:
+        own['spawners'] = [o for o in scene.objects if 'spw' in o]
+        group = own.groupObject
+        if own['spawners']:
+            pos_spw = random.choice(own['spawners'])
+            own.worldPosition = pos_spw.worldPosition
+            pos_spw.endObject()
+            own['spawners'].remove(pos_spw)
+            print(own['spawners'])
+            
+
 def state_machine(cont):
     own = cont.owner
+    
     group = own.groupObject
-    pl =player[0]
+    
+    
+    pl =own['pl'][0]
     distancia= own.getDistanceTo(pl)
     Steering = cont.actuators['seguir']
     radar = cont.sensors['Radar']
@@ -58,7 +71,8 @@ def state_machine(cont):
             status['atacando'] -= 1
 
         if distancia < 5 and distancia >1:
-                own['is_mov'] = True
+                group['is_mov'] = True
+                
         
         if own['state']  == 'idle':
             idle(cont)
@@ -90,8 +104,9 @@ def death(cont):
 
 def idle(cont):
     own = cont.owner
+    group = own.groupObject
     own['z_arm'][0].playAction('idle_z',1,41,play_mode = 1,blendin = 5)
-    if own['is_mov'] and  status['atacando'] == 0:
+    if group['is_mov'] and  status['atacando'] == 0:
         own['state'] = 'walk'
     if own['hited']:
         own['state'] = 'hited'
@@ -100,7 +115,7 @@ def walk(cont,distancia,Steering):
     own = cont.owner
     own['soltar'] = 0
     own.applyMovement([0,0.01,0], True)
-    Steering.target = player[0]
+    Steering.target = own['pl'][0]
     Steering.navmesh = own['m'][0]
     cont.activate(Steering)
     if status['atacando'] == 0:
@@ -144,15 +159,15 @@ def grab_atack(cont):
         status['agarrado'] = False
     if status['player']['saude']>0:
         own['z_arm'][0].playAction('agarrao_z',25,81,play_mode = 2,blendin = 5)
-        player[0].worldPosition = own['pos_play'][0].worldPosition
+        own['pl'][0].worldPosition = own['pos_play'][0].worldPosition
         #own.applyMovement([0,-0.03,0], True)
-        foco_mira_eix = player[0].childrenRecursive.get('foco_mira_eix')
+        foco_mira_eix = own['pl'][0].childrenRecursive.get('foco_mira_eix')
         dir = own.worldPosition - foco_mira_eix.worldPosition
         foco_mira_eix.alignAxisToVect(-dir, 1, 0.5)
         foco_mira_eix.alignAxisToVect([0,0,1], 2, 1.0)
 
     if status['player']['saude']<=0:
-        pl =player[0]
+        pl =own['pl'][0]
         distancia= own.getDistanceTo(pl)
         if distancia<2:
             own['z_arm'][0].playAction('devora_z',1,209,play_mode = 2,blendin = 5)
@@ -167,7 +182,7 @@ def hited(cont):
             own['state'] = 'idle'
         if frame < 130:
             own['z_arm'][0].playAction('agarrao_z',81,130,play_mode = 1,blendin = 5,speed = 2,priority = 0)
-            dir = own.worldPosition - player[0].worldPosition
+            dir = own.worldPosition - own['pl'][0].worldPosition
             own.alignAxisToVect( -dir , 1 , 1.0 )
             own.alignAxisToVect( [0,0,1] , 2 , 1.0 )
             own.applyMovement([0,-0.03,0], True)
@@ -177,7 +192,7 @@ def hited(cont):
             own['state'] = 'idle'
         if frame < 29:
             own['z_arm'][0].playAction('z_damage',1,30,play_mode = 1,blendin = 5,speed = 2,priority = 0)
-            dir = own.worldPosition - player[0].worldPosition
+            dir = own.worldPosition - own['pl'][0].worldPosition
             own.alignAxisToVect( -dir , 1 , 1.0 )
             own.alignAxisToVect( [0,0,1] , 2 , 1.0 )
             #own.applyMovement([0,-0.03,0], True)

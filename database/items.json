@@ -1,4 +1,5 @@
 {   "bala_pistola": {
+    "save": "",
     "mesh": "mesh_bala_pistola",
     "quant": 30,
     "tipo": "municao",
@@ -6,6 +7,7 @@
     "descricao_bau": "Balas de Pistola Calibre 45 mm"
     },
     "faca": {
+        "save": "",
         "mesh": "mesh_faca",
         "tipo": "faca",
         "descri_item_most": "Faca de Combate",
@@ -13,6 +15,7 @@
         },
 
     "bala_metralha": {
+        "save": "",
         "mesh": "mesh_bala_metralha",
         "quant": 30,
         "tipo": "municao",
@@ -20,6 +23,7 @@
         "descricao_bau": "Balas de Fuzil de Assalto "
     },
     "bala_shotgun": {
+        "save": "",
         "mesh": "mesh_bala_shotgun",
         "quant": 10,
         "tipo": "municao",
@@ -27,12 +31,14 @@
         "descricao_bau": "Balas de Shotgun 12 mm"
     },
     "shotgun": {
+        "save": "",
         "mesh": "mesh_shotgun",
         "tipo": "arma",
         "descri_item_most": "arma calibre 12",
         "descricao_bau": "Escopeta calibre 12 de curto Alcance"
     },
     "pistola": {
+        "save": "",
         "mesh": "mesh_pistola",
         "tipo": "arma",
         "descri_item_most": "arma calibre 45",
@@ -40,12 +46,14 @@
         
     },
     "metralha": {
+        "save": "",
         "mesh": "mesh_metralha",
         "tipo": "arma",
         "descri_item_most": "fuzil de assalto AR-15",
         "descricao_bau": "Fuzil de assalto de longo Alcance"
     },
     "key_0": {
+        "save": "",
         "mesh": "mesh_key_0",
         "tipo": "key",
         "descri_item_most": "serve para abrir uma porta",
@@ -53,6 +61,7 @@
         
     },
     "med_kit": {
+        "save": "",
         "mesh": "mesh_med_kit",
         "tipo": "cura",
         "key": 1,
