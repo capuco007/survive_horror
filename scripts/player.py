@@ -20,6 +20,12 @@ def start(cont):
     scene = own.scene
     #gd['save_status_inRam']['last_scene'] = own.scene.name
     own['arm'] = [arm for arm in own.childrenRecursive if 'player_arm' in arm]
+    own['can_pos'] = [o for o in own.childrenRecursive if 'pos_can' in o]
+    own['can_track'] = [o for o in own.childrenRecursive if 'track_can' in o]
+    own['point'] = [o for o in own.childrenRecursive if 'point' in o]
+    own['Camera'] = [o for o in scene.objects if 'Camera_pl_pos' in o]
+    own['Camera1'] = [o for o in scene.objects if 'Camera_pl' in o]
+
     own['isMove'] = 0
     own['scene_pass'] = False
     own['dor_open'] = False
@@ -30,6 +36,7 @@ def start(cont):
     own['most_item'] = 0
     own['list_enemyes'] = []
     own['oHited'] = None
+    own['olhar'] = None
     own['arma_mao_pl'] = [o for o in own.childrenRecursive if 'arma_da_mao' in o]
     foco_mira_eix = own.childrenRecursive.get('foco_mira_eix')
     foco_mira_eix.alignAxisToVect([0,0,1], 2, 1.0)
@@ -131,6 +138,7 @@ def mostra_item(cont,o):
  
 def movement(cont):
     own = cont.owner
+    scene = own.scene
     char = bge.constraints.getCharacter(own)
     tc = bge.logic.keyboard.inputs
     ms = bge.logic.mouse.inputs
@@ -142,9 +150,9 @@ def movement(cont):
    
     if status['player']['saude'] >30:
         if not tc[bge.events.LEFTSHIFTKEY].active:
-            own['speed'] =0.04
+            own['speed'] =0.06
         else:
-            own['speed'] =0.07
+            own['speed'] =0.10
     else:
         own['speed'] = 0.03
     if status['dano'] == 0:
@@ -152,7 +160,8 @@ def movement(cont):
             if not status['agarrado']:
                 if not open_bau and not open_invent :
                     if not ms[bge.events.RIGHTMOUSE].active:
-                        char.walkDirection = Vector([x,y,0]).normalized()*own['speed']
+                        track_can = scene.objects['track_can']
+                        char.walkDirection = track_can.worldOrientation * Vector([x,y,0]).normalized()*own['speed']
                     
                     else:
                         if status['player']['arma_mao'] == '':
@@ -273,7 +282,9 @@ def mirar(cont):
     foco_mira = cont.sensors['foco_mira']
     tc = bge.logic.keyboard.inputs
     scene = own.scene
-    #MouseTrack = cont.actuators['MouseTrack']
+    
+    #Look = cont.actuators['Look']
+    
     if ms[bge.events.RIGHTMOUSE].activated :
         if status['player']['arma_mao'] != '':
             if foco_mira.positive:
@@ -291,9 +302,11 @@ def mirar(cont):
                         dir = own.worldPosition - enemy.worldPosition
                         own.alignAxisToVect( dir ,1 ,1.0 )
                         own.alignAxisToVect([0,0,1], 2, 1.0)
+                        scene.objects['track_can'].alignAxisToVect( -dir ,1 ,1.0 )
+                        scene.objects['track_can'].alignAxisToVect([0,0,1], 2, 1.0)
         
             
-    else:
+    else:   
         status['list_enemyes'] =[]
                 #cont.activate(MouseTrack)
                 #cont.deactivate(MouseTrack)
@@ -308,19 +321,24 @@ def mirar(cont):
         #cont.activate(MouseTrack)
 def walkDir(cont):
     own = cont.owner
+    scene = own.scene
     char = bge.constraints.getCharacter(own)
     dir = char.walkDirection
     foco_mira_eix = own.childrenRecursive.get('foco_mira_eix')
+    track_can = own.childrenRecursive.get('track_can')
     
     if dir.length != 0:
         if  own['oHited']:
-            print(own['oHited'])
+            print(own['oHited'],track_can)
             dir = own.worldPosition - own['oHited'].worldPosition
             foco_mira_eix.alignAxisToVect(dir, 1, 0.5)
             foco_mira_eix.alignAxisToVect([0,0,1], 2, 1.0)
+            
         else:
             foco_mira_eix.alignAxisToVect(-dir, 1, 0.5)
             foco_mira_eix.alignAxisToVect([0,0,1], 2, 1.0)
+            track_can.alignAxisToVect(dir, 1, 0.04)
+            track_can.alignAxisToVect([0,0,1], 2, 1.0)
 
 def anim(cont):
     own = cont.owner
@@ -389,10 +407,10 @@ def anim(cont):
                         if dir.length != 0:
                             if status['player']['saude'] >30:
                                 if tc[bge.events.LEFTSHIFTKEY].active:
-                                    own['arm'][0].playAction('run_faca',1,23,play_mode = 1,blendin = 5)
+                                    own['arm'][0].playAction('run_faca',1,23,play_mode = 1,blendin = 5,speed = 1)
                                     
                                 else:
-                                    own['arm'][0].playAction('walk',1,32,play_mode = 1,blendin = 5)
+                                    own['arm'][0].playAction('walk',1,32,play_mode = 1,blendin = 5,speed = 1)
                             else:
                                 own['arm'][0].playAction('machucado',1,31,play_mode = 1,blendin = 5)
                             
@@ -408,10 +426,10 @@ def anim(cont):
                             if dir.length != 0:
                                 if status['player']['saude'] >30:
                                     if tc[bge.events.LEFTSHIFTKEY].active:
-                                        own['arm'][0].playAction('run_'+arma,1,frameAnim['run_'+arma],play_mode = 1,blendin = 5)
+                                        own['arm'][0].playAction('run_'+arma,1,frameAnim['run_'+arma],play_mode = 1,blendin = 5,speed = 1)
                                         
                                     else:
-                                        own['arm'][0].playAction('walk_'+arma,1,frameAnim['walk_'+arma],play_mode = 1,blendin = 5)
+                                        own['arm'][0].playAction('walk_'+arma,1,frameAnim['walk_'+arma],play_mode = 1,blendin = 5,speed = 1)
                                 else:
                                     own['arm'][0].playAction('machucado',1,31,play_mode = 1,blendin = 5,speed = 0.9)
                             else:
@@ -609,7 +627,24 @@ def new_game(cont):
                 os.remove(path2)
                 print('deletou')
     if status['trade_scene_time'] ==1:
-        scene.replace('_game_test')
+        scene.replace('salao_principal')
+def can_collision(cont):
+    own = cont.owner
+    scene = own.scene
+    ray = own.rayCast( own['can_track'][0],own['can_pos'][0], own['can_track'][0].getDistanceTo(own['can_pos'][0]),'wall')
+    if ray[0] != None:
+        print(ray)
+        own['Camera'][0].worldPosition = ray[1]
+        own['Camera'][0].worldPosition.y = ray[1][1] +0.6
+        #own['Camera'][0].worldPosition.z = ray[1][2] +1.5
+
+        
+        
+        
+        
+        #own['Camera'][0].sensor_width = 100.0
+    else:
+        own['Camera'][0].worldPosition = own['can_pos'][0].worldPosition
 
    
 def update(cont):
@@ -617,6 +652,7 @@ def update(cont):
     up = cont.sensors['update']
     scenList = bge.logic.getSceneList()
     scene = own.scene
+    can_collision(cont)
     tc = bge.logic.keyboard.inputs
     if tc[bge.events.DELKEY].activated:
         new_game(cont)
@@ -637,6 +673,7 @@ def update(cont):
         transicao_scene(cont)
         anim(cont)
         walkDir(cont)
+        #can_collision(cont)
         
         if status['dano'] >0:
             status['dano'] -=1
