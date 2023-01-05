@@ -53,8 +53,8 @@ def start(cont):
         status['pos_spw'] = []
         gd['save_ram']['player_position'] = ''
     else:
-        if gd['save_ram']['player_position'] !='':
-            own.worldPosition = gd['save_ram']['player_position']
+        if status['save_ram']['player_position'] !='':
+            own.worldPosition = status['save_ram']['player_position']
     
 def collDors(cont):
     own = cont.owner
@@ -89,7 +89,7 @@ def abrir_portas(cont):
             # porta aberta
             else:
                 if tc[bge.events.SPACEKEY].activated:
-                    gd['save_ram']['last_scene'] = o['local']
+                    status['save_ram']['last_scene'] = o['local']
                     save_status_game(cont)
                     status['pos_spw'] = literal_eval(o['position'])
                     status['alaing'] = literal_eval(o['alaing'])
@@ -482,7 +482,7 @@ def save_status_game(cont):
     own = cont.owner
     tc = bge.logic.keyboard.inputs
     
-    save_game_ram = gd['save_ram']
+    save_game_ram = status['save_ram']
     scene = own.scene
     save_game_ram[scene.name] = {}
 
@@ -491,11 +491,14 @@ def save_status_game(cont):
             obj_data = {}
             for prop in o.getPropertyNames():
                 obj_data[prop] = o[prop]
-                gd['save_ram'][scene.name][o.name] = obj_data
+                status['save_ram'][scene.name][o.name] = obj_data
+                #gd['save_ram'][scene.name][o.name] = obj_data
+                
 
 def load_in_disc(cont):
     own = cont.owner
     scene = own.scene
+    global status
     tc = bge.logic.keyboard.inputs
     from pprint import pformat
     ms = cont.sensors['Mouse']
@@ -505,8 +508,9 @@ def load_in_disc(cont):
         status['trade_scene_time'] -=1
     if ms.positive and msKey[bge.events.LEFTMOUSE].activated:
         try:
+
             with open(bge.logic.expandPath('//save.txt'), 'r') as openedFile:
-                gd['save_ram'] = eval(openedFile.read())
+                status = eval(openedFile.read())
                 print('> Savegame carregado de', openedFile.name)
                 bge.logic.sendMessage('load')
                 if status['trade_scene_time'] == 0:
@@ -515,7 +519,8 @@ def load_in_disc(cont):
             print('nao achou o save .txt')
 
     if status['trade_scene_time'] ==1:
-        scene.replace(gd['save_ram']['last_scene'])
+        print(status['save_ram']['last_scene'])
+        scene.replace(status['save_ram']['last_scene'])
 
 
        
@@ -530,10 +535,10 @@ def save_in_dis(cont):
         gd['save_ram']['player_position'] = own.worldPosition
         gd['save_ram']['last_scene'] = own.scene.name
        
+        # open(bge.logic.expandPath('//save.txt'), 'w') as openedFile:
+            #openedFile.write(pformat(gd['save_ram']))
+            #print('> Savegame salvo em', openedFile.name)
         with open(bge.logic.expandPath('//save.txt'), 'w') as openedFile:
-            openedFile.write(pformat(gd['save_ram']))
-            print('> Savegame salvo em', openedFile.name)
-        with open(bge.logic.expandPath('//save_pl.txt'), 'w') as openedFile:
             openedFile.write(pformat(gd['game_status']))
             print('> Savegame salvo em', openedFile.name)
         
@@ -541,7 +546,7 @@ def load_game(cont):
     from pprint import pformat
     print('carregou static game')
     scene = cont.owner.scene
-    save_game_ram = gd['save_ram']
+    save_game_ram = status['save_ram']
     scene_data = save_game_ram.get(scene.name)
     scene_last = save_game_ram['last_scene']
     
@@ -602,30 +607,22 @@ def save_load(cont):
             print('> Savegame salvo em', openedFile.name)
 
 def new_game(cont):
+    from pathlib import Path
     own = cont.owner
     scene = own.scene
     print(status['trade_scene_time'])
     if status['trade_scene_time'] >0:
         status['trade_scene_time'] -=1
-    import os
+  
     ms = bge.logic.mouse.inputs
-    path =bge.logic.expandPath('//save.txt')
-    path2 =bge.logic.expandPath('//save_pl.txt')
+    path = Path(bge.logic.expandPath('//save.txt'))
+   
     if ms[bge.events.LEFTMOUSE].activated:
         bge.logic.sendMessage('new')
-        if not os.path.exists(path) and not os.path.exists(path2):
-            if status['trade_scene_time'] == 0:
-                status['trade_scene_time'] = 60
-        else:
-            bge.logic.restartGame()
-
-        if ms[bge.events.LEFTMOUSE].activated:
-            if os.path.exists(path):
-                os.remove(path)
-                print('deletou')
-            if os.path.exists(path2):
-                os.remove(path2)
-                print('deletou')
+        if path.exists():
+            path.unlink()
+        status['trade_scene_time'] = 20
+       
     if status['trade_scene_time'] ==1:
         scene.replace('salao_principal')
 def can_collision(cont):
